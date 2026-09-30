@@ -1,0 +1,28 @@
+{
+  "source": "cpp_subject1",
+  "type": "CLL",
+  "node_count": 4,
+  "current_index": 2,
+  "waypoints": [
+    {
+      "row": 2,
+      "col": 2,
+      "label": "Zone-A"
+    },
+    {
+      "row": 2,
+      "col": 7,
+      "label": "Zone-B"
+    },
+    {
+      "row": 7,
+      "col": 7,
+      "label": "Zone-C"
+    },
+    {
+      "row": 7,
+      "col": 2,
+      "label": "Zone-D"
+    }
+  ]
+}

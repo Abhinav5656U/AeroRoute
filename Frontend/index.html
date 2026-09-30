@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AeroRoute | Autonomous Delivery</title>
+  <link rel="stylesheet" href="style.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+</head>
+<body>
+  <!-- Clean, DJI-inspired Navbar -->
+  <nav class="navbar glass">
+    <div class="nav-container">
+      <div class="nav-logo">
+        <i class="fas fa-drone"></i>
+        <span>AeroRoute</span>
+      </div>
+      <div class="nav-links">
+        <a href="#modules">Modules</a>
+        <a href="#dashboard">Live Data</a>
+        <a href="#mission">Mission Control</a>
+        <a href="#coa">Registers</a>
+      </div>
+      <div class="backend-status" id="backendStatus">
+        <span class="status-dot" id="beDot"></span>
+        <span id="beLabel">System Offline</span>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Spacious Hero Section -->
+  <header class="hero">
+    <div class="container">
+      <div class="hero-content">
+        <span class="tag">MIT Academy of Engineering · Sem III PBL</span>
+        <h1>Autonomous Drone Delivery System</h1>
+        <p>A native C++ logistics engine visualized through a real-time web interface.</p>
+      </div>
+      
+      <!-- Glassmorphism Telemetry Cards -->
+      <div class="hero-telemetry">
+        <div class="telemetry-card glass">
+          <span class="label">ALTITUDE</span>
+          <span class="value mono" id="heroAlt">— m</span>
+        </div>
+        <div class="telemetry-card glass">
+          <span class="label">SPEED</span>
+          <span class="value mono" id="heroSpd">— m/s</span>
+        </div>
+        <div class="telemetry-card glass">
+          <span class="label">BATTERY</span>
+          <span class="value mono" id="heroBat">— %</span>
+        </div>
+        <div class="telemetry-card glass">
+          <span class="label">STATUS</span>
+          <span class="value mono" id="heroStatus">STANDBY</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Modules Section -->
+  <section id="modules" class="section">
+    <div class="container">
+      <h2>System Architecture</h2>
+      <div class="grid-2x2">
+        <!-- Subject 1 -->
+        <div class="module-card glass">
+          <div class="module-header">
+            <span class="course-code">2310214L</span>
+            <h3>Programming Lab</h3>
+            <i class="fas fa-clock status-icon" id="status-s1"></i>
+          </div>
+          <p><strong>CO1:</strong> City Grid Arrays (2D array, CRUD)<br>
+             <strong>CO2:</strong> Route Tracking (SLL, DLL, CLL)</p>
+          <div class="tech-tags"><span>C++</span><span>Arrays</span></div>
+        </div>
+        <!-- Subject 2 -->
+        <div class="module-card glass">
+          <div class="module-header">
+            <span class="course-code">2310221L</span>
+            <h3>COA Lab</h3>
+            <i class="fas fa-clock status-icon" id="status-s2"></i>
+          </div>
+          <p><strong>CO1:</strong> CPU Register Simulation<br>
+             <strong>CO2:</strong> 64-bit Assembly Logic</p>
+          <div class="tech-tags"><span>x86-64</span><span>Registers</span></div>
+        </div>
+        <!-- Subject 3 -->
+        <div class="module-card glass">
+          <div class="module-header">
+            <span class="course-code">2310218L</span>
+            <h3>Graphics Lab</h3>
+            <i class="fas fa-clock status-icon" id="status-s3"></i>
+          </div>
+          <p><strong>CO1:</strong> OpenGL Primitives<br>
+             <strong>CO3:</strong> Transforms and Clipping</p>
+          <div class="tech-tags"><span>OpenGL</span><span>Geometry</span></div>
+        </div>
+        <!-- Subject 4 -->
+        <div class="module-card glass">
+          <div class="module-header">
+            <span class="course-code">2310261L</span>
+            <h3>OOP Lab</h3>
+            <i class="fas fa-clock status-icon" id="status-s4"></i>
+          </div>
+          <p><strong>CO1:</strong> Class Hierarchy<br>
+             <strong>CO2:</strong> Polymorphism</p>
+          <div class="tech-tags"><span>OOP</span><span>Classes</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Live Dashboard -->
+  <section id="dashboard" class="section bg-light">
+    <div class="container">
+      <h2>Live Fleet Tracking</h2>
+      <div class="dashboard-layout">
+        <div class="canvas-container glass">
+          <div class="canvas-header">
+            <span>City Grid Overview</span>
+            <span class="mono text-small" id="gridStatus">Waiting for data...</span>
+          </div>
+          <canvas id="dashCanvas" width="580" height="500"></canvas>
+          <div class="legend">
+            <span><div class="box" style="background:#f2994a"></div> Warehouse</span>
+            <span><div class="box" style="background:#56ccf2"></div> Customer</span>
+            <span><div class="box" style="background:#27ae60"></div> Charging</span>
+            <span><div class="box" style="background:#eb5757"></div> Obstacle</span>
+          </div>
+        </div>
+        
+        <div class="side-panels">
+          <div class="panel glass">
+            <h4>Live Telemetry</h4>
+            <div class="data-grid mono text-small" id="telemetryPanel">
+               <div>Pos: <span id="tpPos">—</span></div>
+               <div>Head: <span id="tpHead">—</span></div>
+               <div>Model: <span id="tpModel">—</span></div>
+               <div>Route: <span id="tpRoute">—</span></div>
+            </div>
+          </div>
+          <div class="panel glass">
+            <h4>Active OOP Entities</h4>
+            <div id="entityList" class="text-small mono">No entities loaded.</div>
+          </div>
+          <div class="panel glass">
+            <h4>Route Linked List</h4>
+            <div id="llVisual" class="text-small mono">Waiting for route...</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Mission Control Form -->
+  <section id="mission" class="section">
+    <div class="container">
+      <h2>Mission Control</h2>
+      <div class="dashboard-layout">
+        <div class="form-container glass">
+          <h4>Configure Parameters</h4>
+          <div class="input-group">
+            <label>Drone Model</label>
+            <select id="droneModel">
+              <option value="delivery">AR-D1 Delivery</option>
+              <option value="scout">AR-S1 Scout</option>
+            </select>
+          </div>
+          <div class="input-group">
+            <label>Route Type</label>
+            <select id="routeType">
+              <option value="SLL">Single Delivery (SLL)</option>
+              <option value="DLL">Return Path (DLL)</option>
+              <option value="CLL">Patrol (CLL)</option>
+            </select>
+          </div>
+          <div class="grid-2x2">
+            <div class="input-group">
+              <label>Source (Row, Col)</label>
+              <input type="text" id="srcNode" placeholder="e.g., 0,0">
+            </div>
+            <div class="input-group">
+              <label>Destination (Row, Col)</label>
+              <input type="text" id="dstNode" placeholder="e.g., 9,9">
+            </div>
+          </div>
+          <button id="btnSend" class="btn primary">Transmit to C++</button>
+        </div>
+        
+        <div class="panel glass">
+          <h4>Mission Log</h4>
+          <div id="missionLog" class="log-window mono text-small">
+            <div>[SYSTEM] Interface initialized. Awaiting C++ engine...</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- COA Registers -->
+  <section id="coa" class="section bg-light">
+    <div class="container">
+      <h2>CPU Registers Viewer</h2>
+      <div class="glass panel">
+        <table class="register-table mono" id="regTable">
+          <thead>
+            <tr><th>Register</th><th>64-bit Hex</th><th>Decimal</th><th>Role</th></tr>
+          </thead>
+          <tbody>
+            <tr id="row-RAX"><td>RAX</td><td id="hex-RAX">0x0000000000000000</td><td id="dec-RAX">0</td><td>Altitude</td></tr>
+            <tr id="row-RBX"><td>RBX</td><td id="hex-RBX">0x0000000000000000</td><td id="dec-RBX">0</td><td>Speed</td></tr>
+            <tr id="row-RCX"><td>RCX</td><td id="hex-RCX">0x0000000000000000</td><td id="dec-RCX">0</td><td>Heading</td></tr>
+            <tr id="row-RDX"><td>RDX</td><td id="hex-RDX">0x0000000000000000</td><td id="dec-RDX">0</td><td>Battery</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <div class="container">
+      <p>AeroRoute Engine Team</p>
+      <div class="team-list">
+        <span>Abhinav Kumar</span> · <span>Student 2</span> · <span>Student 3</span> · <span>Student 4</span>
+      </div>
+    </div>
+  </footer>
+
+  <script src="dashboard.js"></script>
+</body>
+</html>
