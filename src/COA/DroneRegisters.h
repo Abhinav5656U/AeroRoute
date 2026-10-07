@@ -1,5 +1,5 @@
 /*
- * ============================================================
+ *
  * FILE        : DroneRegisters.h
  * PROJECT     : AeroRoute — Autonomous Drone Delivery Simulator
  * SUBJECT     : COA Lab | Course Code: 2310221L
@@ -8,9 +8,8 @@
  *               RAX RBX RCX RDX PC IR SP FLAGS and implement
  *               basic register transfer operations for drone
  *               telemetry processing.
- * AUTHOR      : [Your Name] | MIT Academy of Engineering
  * DATE        : 2026-2027
- * ============================================================
+ *
  */
 
 #ifndef DRONE_REGISTERS_H
@@ -20,6 +19,7 @@
 #include <vector>
 #include "../shared/Constants.h"
 #include "../shared/JsonWriter.h"
+using namespace std;
 
 // ════════════════════════════════════════════════════════════
 // [COA CO1 - Task 1: FLAGS Register Structure]
@@ -101,24 +101,24 @@ public:
     // MOV register to register
     // Equivalent: MOV RBX, RAX
     void MOV_REG_TO_REG(long long& dest, long long src,
-                        const std::string& destName,
-                        const std::string& srcName);
+                        const string& destName,
+                        const string& srcName);
 
     // ADD: dest = dest + src, updates FLAGS
     // Equivalent: ADD RAX, RBX
     long long ADD(long long dest, long long src,
-                  const std::string& destName);
+                  const string& destName);
 
     // SUB: dest = dest - src, updates FLAGS
     // Equivalent: SUB RAX, RBX
     long long SUB(long long dest, long long src,
-                  const std::string& destName);
+                  const string& destName);
 
     // CMP: subtract without storing, only update FLAGS
     // Equivalent: CMP RAX, RBX
     void CMP(long long op1, long long op2,
-             const std::string& op1Name,
-             const std::string& op2Name);
+             const string& op1Name,
+             const string& op2Name);
 
     // Advance PC by 4 bytes (one instruction)
     void advancePC();
@@ -146,11 +146,11 @@ public:
 
     // ── Display ──────────────────────────────────────────────
     void displayRegisters() const;
-    void displayRegisterState(const std::string& context) const;
+    void displayRegisterState(const string& context) const;
 
     // ── JSON export ──────────────────────────────────────────
     void exportToJson(
-        const std::vector<InstructionData>& instructions,
+        const vector<InstructionData>& instructions,
         const DisplacementData& disp) const;
 };
 

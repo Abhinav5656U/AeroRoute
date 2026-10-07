@@ -1,23 +1,25 @@
 /*
- * ============================================================
+ *
  * FILE        : Drone.cpp
  * PROJECT     : AeroRoute — Autonomous Drone Delivery Simulator
  * SUBJECT     : PSOOP — Problem Solving Using OOP
  * COURSE CODE : 2310261L
  * TASK        : Task 1 CO1 | Task 2 CO2
- * ============================================================
+ *
  */
 
 #include "Drone.h"
 #include <cmath>
 #include <iomanip>
+#include <stdexcept>
+using namespace std;
 
 int Drone::idCounter = 1;
 
 // ════════════════════════════════════════════════════════════
 // Drone Base Class Implementation
 // ════════════════════════════════════════════════════════════
-Drone::Drone(const std::string& serial,
+Drone::Drone(const string& serial,
              double maxBattery,
              int startRow, int startCol)
     : serialNumber(serial),
@@ -32,14 +34,13 @@ Drone::Drone(const std::string& serial,
       loadedPackage(nullptr)
 {
     droneId = idCounter++;
-    std::cout << "[PSOOP] Drone created: "
-              << getModelName()
+    cout << "[PSOOP] Drone created"
               << " | Serial: " << serial
               << " | ID: " << droneId << "\n";
 }
 
 Drone::~Drone() {
-    std::cout << "[PSOOP] Drone destroyed: "
+    cout << "[PSOOP] Drone destroyed: "
               << serialNumber << "\n";
 }
 
@@ -52,13 +53,16 @@ Drone::~Drone() {
 
 // Load package onto drone
 bool Drone::loadPackage(Package* pkg) {
+    if (!pkg) {
+        throw invalid_argument("Cannot load a null package.");
+    }
     if (loadedPackage != nullptr) {
-        std::cout << "[PSOOP] " << serialNumber
+        cout << "[PSOOP] " << serialNumber
                   << " already carrying a package.\n";
         return false;
     }
     if (!pkg->isWithinDroneLimit(getMaxPayloadKg())) {
-        std::cout << "[PSOOP] Package too heavy for "
+        cout << "[PSOOP] Package too heavy for "
                   << getModelName()
                   << " (max " << getMaxPayloadKg() << "kg).\n";
         return false;
@@ -66,7 +70,7 @@ bool Drone::loadPackage(Package* pkg) {
     loadedPackage = pkg;
     pkg->markLoaded();
     status = "LOADED";
-    std::cout << "[PSOOP] " << serialNumber
+    cout << "[PSOOP] " << serialNumber
               << " loaded: " << pkg->getTrackingCode() << "\n";
     return true;
 }
@@ -74,27 +78,27 @@ bool Drone::loadPackage(Package* pkg) {
 // Unload package at destination
 bool Drone::unloadPackage() {
     if (!loadedPackage) {
-        std::cout << "[PSOOP] No package to unload.\n";
+        cout << "[PSOOP] No package to unload.\n";
         return false;
     }
     loadedPackage->markDelivered();
     loadedPackage = nullptr;
     status = "IDLE";
-    std::cout << "[PSOOP] " << serialNumber
+    cout << "[PSOOP] " << serialNumber
               << " package delivered and unloaded.\n";
     return true;
 }
 
 // Charge battery
 void Drone::chargeBattery(float percent) {
-    batteryPct = std::min(100.0, batteryPct + percent);
-    std::cout << "[PSOOP] " << serialNumber
+    batteryPct = min(100.0, batteryPct + percent);
+    cout << "[PSOOP] " << serialNumber
               << " charged to " << batteryPct << "%\n";
 }
 
 // Drain battery (per flight unit)
 void Drone::drainBattery(double amount) {
-    batteryPct = std::max(0.0, batteryPct - amount);
+    batteryPct = max(0.0, batteryPct - amount);
 }
 
 // Check if charging is needed
@@ -105,25 +109,25 @@ bool Drone::needsCharging(double threshold) const {
 // ── Base display ──────────────────────────────────────────────
 // [PSOOP CO2 - CO2: Shared display used by all models]
 void Drone::display() const {
-    std::cout << "\n  ┌─────────────────────────────┐\n";
-    std::cout << "  │  " << std::left << std::setw(27)
+    cout << "\n  ┌─────────────────────────────┐\n";
+    cout << "  │  " << left << setw(27)
               << getModelName() << "│\n";
-    std::cout << "  └─────────────────────────────┘\n";
-    std::cout << "  ID       : " << droneId           << "\n";
-    std::cout << "  Serial   : " << serialNumber      << "\n";
-    std::cout << "  Position : (" << currentRow
+    cout << "  └─────────────────────────────┘\n";
+    cout << "  ID       : " << droneId           << "\n";
+    cout << "  Serial   : " << serialNumber      << "\n";
+    cout << "  Position : (" << currentRow
                                   << "," << currentCol << ")\n";
-    std::cout << "  Altitude : " << altitudeM << " m" << "\n";
-    std::cout << "  Heading  : " << headingDeg << " deg\n";
-    std::cout << "  Battery  : " << std::fixed
-              << std::setprecision(1)
+    cout << "  Altitude : " << altitudeM << " m" << "\n";
+    cout << "  Heading  : " << headingDeg << " deg\n";
+    cout << "  Battery  : " << fixed
+              << setprecision(1)
               << batteryPct << "%\n";
-    std::cout << "  Status   : " << status            << "\n";
-    std::cout << "  Payload  : max "
+    cout << "  Status   : " << status            << "\n";
+    cout << "  Payload  : max "
               << getMaxPayloadKg() << " kg\n";
-    std::cout << "  Range    : max "
+    cout << "  Range    : max "
               << getMaxRangeUnits() << " cells\n";
-    std::cout << "  Package  : "
+    cout << "  Package  : "
               << (loadedPackage
                   ? loadedPackage->getTrackingCode()
                   : "none") << "\n";
@@ -131,13 +135,13 @@ void Drone::display() const {
 }
 
 void Drone::displayFlightLog() const {
-    std::cout << "\n  Flight Log (" << serialNumber << "):\n";
+    cout << "\n  Flight Log (" << serialNumber << "):\n";
     if (flightLog.empty()) {
-        std::cout << "  No flights recorded.\n";
+        cout << "  No flights recorded.\n";
         return;
     }
     for (int i = 0; i < (int)flightLog.size(); i++) {
-        std::cout << "  [" << i << "] ("
+        cout << "  [" << i << "] ("
                   << flightLog[i].first << ","
                   << flightLog[i].second << ")\n";
     }
@@ -145,18 +149,18 @@ void Drone::displayFlightLog() const {
 
 // ── Getters / Setters ─────────────────────────────────────────
 int         Drone::getId()           const { return droneId; }
-std::string Drone::getSerialNumber() const { return serialNumber; }
+string Drone::getSerialNumber() const { return serialNumber; }
 double      Drone::getBatteryPct()   const { return batteryPct; }
 int         Drone::getCurrentRow()   const { return currentRow; }
 int         Drone::getCurrentCol()   const { return currentCol; }
 double      Drone::getHeadingDeg()   const { return headingDeg; }
 double      Drone::getAltitudeM()    const { return altitudeM; }
-std::string Drone::getStatus()       const { return status; }
+string Drone::getStatus()       const { return status; }
 bool        Drone::hasPackage()      const {
     return loadedPackage != nullptr;
 }
 
-void Drone::setStatus(const std::string& s)  { status = s; }
+void Drone::setStatus(const string& s)  { status = s; }
 void Drone::setAltitude(double alt)          { altitudeM = alt; }
 void Drone::setHeading(double deg)           { headingDeg = deg; }
 
@@ -164,13 +168,13 @@ void Drone::setHeading(double deg)           { headingDeg = deg; }
 // DeliveryDrone Implementation
 // [PSOOP CO2 - Task 2: Override fly() for delivery logic]
 // ════════════════════════════════════════════════════════════
-DeliveryDrone::DeliveryDrone(const std::string& serial,
+DeliveryDrone::DeliveryDrone(const string& serial,
                              int startRow, int startCol,
                              bool parachute)
     : Drone(serial, 150.0, startRow, startCol),
       hasParachuteDrop(parachute)
 {
-    std::cout << "[PSOOP] DeliveryDrone ready: "
+    cout << "[PSOOP] DeliveryDrone ready: "
               << serial << "\n";
 }
 
@@ -178,7 +182,7 @@ DeliveryDrone::~DeliveryDrone() {}
 
 // [PSOOP CO2 - Task 2: Polymorphic fly() for delivery]
 void DeliveryDrone::fly(int targetRow, int targetCol) {
-    std::cout << "\n[PSOOP] DeliveryDrone " << serialNumber
+    cout << "\n[PSOOP] DeliveryDrone " << serialNumber
               << " flying: (" << currentRow << ","
               << currentCol << ") -> ("
               << targetRow  << "," << targetCol << ")\n";
@@ -186,10 +190,10 @@ void DeliveryDrone::fly(int targetRow, int targetCol) {
     // Calculate distance
     double dx = targetCol - currentCol;
     double dy = targetRow - currentRow;
-    double dist = std::sqrt(dx*dx + dy*dy);
+    double dist = sqrt(dx*dx + dy*dy);
 
     // Update heading
-    headingDeg = std::atan2(dy, dx) * 180.0 / 3.14159265;
+    headingDeg = atan2(dy, dx) * 180.0 / 3.14159265;
 
     // Drain battery proportional to distance
     double drain = dist * 2.5;
@@ -204,20 +208,20 @@ void DeliveryDrone::fly(int targetRow, int targetCol) {
     altitudeM  = 0.0;
     status     = "IDLE";
 
-    std::cout << "[PSOOP] DeliveryDrone arrived. "
-              << "Battery: " << std::fixed
-              << std::setprecision(1)
+    cout << "[PSOOP] DeliveryDrone arrived. "
+              << "Battery: " << fixed
+              << setprecision(1)
               << batteryPct << "%\n";
 
     if (loadedPackage) loadedPackage->markInTransit();
 }
 
-std::string DeliveryDrone::getModelName()    const { return "AR-D1 DeliveryDrone"; }
+string DeliveryDrone::getModelName()    const { return "AR-D1 DeliveryDrone"; }
 double      DeliveryDrone::getMaxPayloadKg() const { return 15.0; }
 int         DeliveryDrone::getMaxRangeUnits()const { return 8; }
 
 void DeliveryDrone::displaySpecs() const {
-    std::cout << "  Parachute: "
+    cout << "  Parachute: "
               << (hasParachuteDrop ? "Yes" : "No") << "\n";
 }
 
@@ -225,14 +229,14 @@ void DeliveryDrone::displaySpecs() const {
 // ScoutDrone Implementation
 // [PSOOP CO2 - Task 2: Different fly() — lighter, faster]
 // ════════════════════════════════════════════════════════════
-ScoutDrone::ScoutDrone(const std::string& serial,
+ScoutDrone::ScoutDrone(const string& serial,
                        int startRow, int startCol,
                        int radius)
     : Drone(serial, 80.0, startRow, startCol),
       hasCameraFeed(true),
       scanRadius(radius)
 {
-    std::cout << "[PSOOP] ScoutDrone ready: "
+    cout << "[PSOOP] ScoutDrone ready: "
               << serial << "\n";
 }
 
@@ -240,16 +244,16 @@ ScoutDrone::~ScoutDrone() {}
 
 // [PSOOP CO2 - Scout fly() — lighter drain, higher altitude]
 void ScoutDrone::fly(int targetRow, int targetCol) {
-    std::cout << "\n[PSOOP] ScoutDrone " << serialNumber
+    cout << "\n[PSOOP] ScoutDrone " << serialNumber
               << " scouting: (" << currentRow << ","
               << currentCol << ") -> ("
               << targetRow  << "," << targetCol << ")\n";
 
     double dx   = targetCol - currentCol;
     double dy   = targetRow - currentRow;
-    double dist = std::sqrt(dx*dx + dy*dy);
+    double dist = sqrt(dx*dx + dy*dy);
 
-    headingDeg = std::atan2(dy, dx) * 180.0 / 3.14159265;
+    headingDeg = atan2(dy, dx) * 180.0 / 3.14159265;
     drainBattery(dist * 1.2); // lighter drain
     status    = "FLYING";
     altitudeM = 180.0; // flies higher for recon
@@ -260,13 +264,13 @@ void ScoutDrone::fly(int targetRow, int targetCol) {
     altitudeM  = 0.0;
     status     = "IDLE";
 
-    std::cout << "[PSOOP] ScoutDrone arrived. Battery: "
-              << std::fixed << std::setprecision(1)
+    cout << "[PSOOP] ScoutDrone arrived. Battery: "
+              << fixed << setprecision(1)
               << batteryPct << "%\n";
 }
 
 void ScoutDrone::scanArea(int row, int col) {
-    std::cout << "[PSOOP] ScoutDrone scanning radius "
+    cout << "[PSOOP] ScoutDrone scanning radius "
               << scanRadius << " around ("
               << row << "," << col << ")\n";
     for (int dr = -scanRadius; dr <= scanRadius; dr++) {
@@ -274,34 +278,34 @@ void ScoutDrone::scanArea(int row, int col) {
             int r = row + dr, c = col + dc;
             if (r >= 0 && r < GRID_ROWS &&
                 c >= 0 && c < GRID_COLS)
-                std::cout << "  Scanned: (" << r
+                cout << "  Scanned: (" << r
                           << "," << c << ")\n";
         }
     }
 }
 
-std::string ScoutDrone::getModelName()    const { return "AR-S1 ScoutDrone"; }
+string ScoutDrone::getModelName()    const { return "AR-S1 ScoutDrone"; }
 double      ScoutDrone::getMaxPayloadKg() const { return 0.5; }
 int         ScoutDrone::getMaxRangeUnits()const { return 15; }
 
 void ScoutDrone::displaySpecs() const {
-    std::cout << "  Camera   : "
+    cout << "  Camera   : "
               << (hasCameraFeed ? "Live feed" : "None") << "\n";
-    std::cout << "  Scan R   : " << scanRadius << " cells\n";
+    cout << "  Scan R   : " << scanRadius << " cells\n";
 }
 
 // ════════════════════════════════════════════════════════════
 // HeavyDrone Implementation
 // [PSOOP CO2 - Task 2: Heaviest payload, shortest range]
 // ════════════════════════════════════════════════════════════
-HeavyDrone::HeavyDrone(const std::string& serial,
+HeavyDrone::HeavyDrone(const string& serial,
                        int startRow, int startCol,
                        int rotors)
     : Drone(serial, 300.0, startRow, startCol),
       numRotors(rotors),
       hasStabiliser(true)
 {
-    std::cout << "[PSOOP] HeavyDrone ready: "
+    cout << "[PSOOP] HeavyDrone ready: "
               << serial << " (" << rotors << " rotors)\n";
 }
 
@@ -309,16 +313,16 @@ HeavyDrone::~HeavyDrone() {}
 
 // [PSOOP CO2 - Heavy fly() — most battery drain]
 void HeavyDrone::fly(int targetRow, int targetCol) {
-    std::cout << "\n[PSOOP] HeavyDrone " << serialNumber
+    cout << "\n[PSOOP] HeavyDrone " << serialNumber
               << " lifting: (" << currentRow << ","
               << currentCol << ") -> ("
               << targetRow  << "," << targetCol << ")\n";
 
     double dx   = targetCol - currentCol;
     double dy   = targetRow - currentRow;
-    double dist = std::sqrt(dx*dx + dy*dy);
+    double dist = sqrt(dx*dx + dy*dy);
 
-    headingDeg = std::atan2(dy, dx) * 180.0 / 3.14159265;
+    headingDeg = atan2(dy, dx) * 180.0 / 3.14159265;
     drainBattery(dist * 4.5); // heaviest drain
     status    = "FLYING";
     altitudeM = 80.0; // flies lower due to weight
@@ -329,19 +333,19 @@ void HeavyDrone::fly(int targetRow, int targetCol) {
     altitudeM  = 0.0;
     status     = "IDLE";
 
-    std::cout << "[PSOOP] HeavyDrone arrived. Battery: "
-              << std::fixed << std::setprecision(1)
+    cout << "[PSOOP] HeavyDrone arrived. Battery: "
+              << fixed << setprecision(1)
               << batteryPct << "%\n";
 
     if (loadedPackage) loadedPackage->markInTransit();
 }
 
-std::string HeavyDrone::getModelName()    const { return "AR-H1 HeavyDrone"; }
+string HeavyDrone::getModelName()    const { return "AR-H1 HeavyDrone"; }
 double      HeavyDrone::getMaxPayloadKg() const { return 50.0; }
 int         HeavyDrone::getMaxRangeUnits()const { return 4; }
 
 void HeavyDrone::displaySpecs() const {
-    std::cout << "  Rotors   : " << numRotors     << "\n";
-    std::cout << "  Stabiliser: "
+    cout << "  Rotors   : " << numRotors     << "\n";
+    cout << "  Stabiliser: "
               << (hasStabiliser ? "Yes" : "No") << "\n";
 }

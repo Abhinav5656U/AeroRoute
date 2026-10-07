@@ -1,46 +1,49 @@
 /*
- * ============================================================
+ *
  * FILE        : AssemblyEngine.cpp
  * PROJECT     : AeroRoute — Autonomous Drone Delivery Simulator
  * SUBJECT     : COA Lab | Course Code: 2310221L
  * TASK        : Task 2 — 64-bit Assembly Logic
  * COURSE OUT  : CO2
- * ============================================================
+ *
  */
 
 #include "AssemblyEngine.h"
+#include <algorithm>
 #include <iostream>
 #include <iomanip>
 #include <sstream>
 #include <cmath>
+#include <stdexcept>
+using namespace std;
 
 // ── Constructor ───────────────────────────────────────────────
 AssemblyEngine::AssemblyEngine(DroneRegisters& registerFile)
     : regs(registerFile) {
     currentDisp = {0.0, 0.0, 0.0, "none"};
-    std::cout << "[AssemblyEngine] Initialised. "
+    cout << "[AssemblyEngine] Initialised. "
               << "Ready to execute instructions.\n";
 }
 
 // ── Private: log one instruction to the trace ─────────────────
 // [COA CO2 - Task 2: Instruction trace logging]
 void AssemblyEngine::logInstruction(
-    const std::string& addr,
-    const std::string& op,
-    const std::string& args)
+    const string& addr,
+    const string& op,
+    const string& args)
 {
     instructionLog.push_back({ addr, op, args });
     // Also print to terminal
-    std::cout << "  " << std::left << std::setw(14) << addr
-              << std::setw(6) << op
+    cout << "  " << left << setw(14) << addr
+              << setw(6) << op
               << args << "\n";
 }
 
 // ── Private: convert PC value to hex string ───────────────────
-std::string AssemblyEngine::pcToHex(long long pc) const {
-    std::ostringstream oss;
-    oss << "0x" << std::hex << std::uppercase
-        << std::setfill('0') << std::setw(4) << pc;
+string AssemblyEngine::pcToHex(long long pc) const {
+    ostringstream oss;
+    oss << "0x" << hex << uppercase
+        << setfill('0') << setw(4) << pc;
     return oss.str();
 }
 
@@ -51,15 +54,15 @@ std::string AssemblyEngine::pcToHex(long long pc) const {
 // ════════════════════════════════════════════════════════════
 void AssemblyEngine::SIM_MOV(
     long long& dest, long long src,
-    const std::string& destReg,
-    const std::string& srcOperand)
+    const string& destReg,
+    const string& srcOperand)
 {
     dest = src;
     logInstruction(
         pcToHex(regs.getPC()),
         "MOV",
         destReg + ", " + srcOperand +
-        "  ; " + destReg + " <- " + std::to_string(src)
+        "  ; " + destReg + " <- " + to_string(src)
     );
     regs.advancePC();
 }
@@ -71,17 +74,17 @@ void AssemblyEngine::SIM_MOV(
 // ════════════════════════════════════════════════════════════
 long long AssemblyEngine::SIM_ADD(
     long long dest, long long src,
-    const std::string& destReg,
-    const std::string& srcOperand)
+    const string& destReg,
+    const string& srcOperand)
 {
     long long result = dest + src;
     logInstruction(
         pcToHex(regs.getPC()),
         "ADD",
         destReg + ", " + srcOperand +
-        "  ; " + std::to_string(dest) +
-        " + " + std::to_string(src) +
-        " = " + std::to_string(result)
+        "  ; " + to_string(dest) +
+        " + " + to_string(src) +
+        " = " + to_string(result)
     );
     regs.advancePC();
     return result;
@@ -94,20 +97,106 @@ long long AssemblyEngine::SIM_ADD(
 // ════════════════════════════════════════════════════════════
 long long AssemblyEngine::SIM_SUB(
     long long dest, long long src,
-    const std::string& destReg,
-    const std::string& srcOperand)
+    const string& destReg,
+    const string& srcOperand)
 {
     long long result = dest - src;
     logInstruction(
         pcToHex(regs.getPC()),
         "SUB",
         destReg + ", " + srcOperand +
-        "  ; " + std::to_string(dest) +
-        " - " + std::to_string(src) +
-        " = " + std::to_string(result)
+        "  ; " + to_string(dest) +
+        " - " + to_string(src) +
+        " = " + to_string(result)
     );
     regs.advancePC();
     return result;
+}
+
+// [COA CO3 - Task 3: arithmetic algorithm using successive addition]
+long long AssemblyEngine::SIM_MUL_SUCCESSIVE(
+    long long multiplicand, long long multiplier)
+{
+    if (multiplicand < -1000000LL || multiplicand > 1000000LL ||
+        multiplier < -1000000LL || multiplier > 1000000LL) {
+        throw out_of_range(
+            "Successive-addition multiplication requires operands in [-1000000, 1000000].");
+    }
+    const bool negative = (multiplicand < 0) != (multiplier < 0);
+    const unsigned long long left = multiplicand < 0
+        ? 0ULL - static_cast<unsigned long long>(multiplicand)
+        : static_cast<unsigned long long>(multiplicand);
+    const unsigned long long right = multiplier < 0
+        ? 0ULL - static_cast<unsigned long long>(multiplier)
+        : static_cast<unsigned long long>(multiplier);
+    const unsigned long long additions = min(left, right);
+    const long long addend = static_cast<long long>(max(left, right));
+    long long result = 0;
+
+    cout << "\n[COA CO3 - Task 3] Multiplication by successive addition:\n";
+    for (unsigned long long index = 0; index < additions; ++index) {
+        result = SIM_ADD(result, addend, "RAX", to_string(addend));
+    }
+    if (negative) result = -result;
+    cout << "  " << multiplicand << " x " << multiplier
+         << " = " << result << " ("
+         << additions << " successive additions)\n";
+    return result;
+}
+
+// [COA CO3 - Task 3: 64-bit REPNE SCASB string-length operation]
+size_t AssemblyEngine::asmStringLength(const string& text) {
+    size_t length = 0;
+#if defined(__GNUC__) && defined(__x86_64__)
+    const char* cursor = text.c_str();
+    unsigned long long remaining =
+        static_cast<unsigned long long>(text.size()) + 1ULL;
+    __asm__ volatile (
+        "repne scasb"
+        : "+D"(cursor), "+c"(remaining)
+        : "a"(0)
+        : "memory"
+    );
+    length = static_cast<size_t>(text.size() + 1ULL - remaining - 1ULL);
+#else
+    length = text.size();
+#endif
+    logInstruction(pcToHex(regs.getPC()), "SCASB",
+                   "REPNE SCASB ; input length = " +
+                       to_string(length));
+    regs.advancePC();
+    return length;
+}
+
+// [COA CO3 - Task 3: 64-bit REP MOVSB string-concatenation operation]
+void AssemblyEngine::asmStringAppend(
+    string& destination, const string& source)
+{
+    const string aliasCopy = &destination == &source ? source : string();
+    const string& inputText = &destination == &source ? aliasCopy : source;
+    const size_t oldLength = destination.size();
+    const size_t sourceLength = inputText.size();
+    if (sourceLength > destination.max_size() - oldLength) {
+        throw length_error("Concatenated string exceeds the supported size.");
+    }
+#if defined(__GNUC__) && defined(__x86_64__)
+    destination.resize(oldLength + sourceLength);
+    char* output = destination.data() + oldLength;
+    const char* input = inputText.data();
+    size_t remaining = sourceLength;
+    __asm__ volatile (
+        "rep movsb"
+        : "+D"(output), "+S"(input), "+c"(remaining)
+        :
+        : "memory"
+    );
+#else
+    destination.append(inputText);
+#endif
+    logInstruction(pcToHex(regs.getPC()), "MOVSB",
+                   "REP MOVSB ; appended " + to_string(sourceLength) +
+                       " bytes");
+    regs.advancePC();
 }
 
 // ════════════════════════════════════════════════════════════
@@ -125,15 +214,14 @@ long long AssemblyEngine::SIM_SUB(
 // ════════════════════════════════════════════════════════════
 bool AssemblyEngine::SIM_CMP_JMP(
     long long op1, long long op2,
-    const std::string& jumpType,
-    const std::string& op1Name,
-    const std::string& op2Name)
+    const string& jumpType,
+    const string& op1Name,
+    const string& op2Name)
 {
     // CMP sets flags based on op1 - op2
     long long result = op1 - op2;
     bool ZF = (result == 0);
     bool SF = (result < 0);
-    bool CF = ((unsigned long long)op1 < (unsigned long long)op2);
     bool OF = ((op1 > 0 && op2 < 0 && result < 0) ||
                (op1 < 0 && op2 > 0 && result > 0));
 
@@ -156,7 +244,7 @@ bool AssemblyEngine::SIM_CMP_JMP(
     logInstruction(
         pcToHex(regs.getPC()),
         jumpType,
-        std::string("target  ; Jump ") +
+        string("target  ; Jump ") +
         (taken ? "TAKEN" : "NOT TAKEN")
     );
     regs.advancePC();
@@ -190,33 +278,33 @@ long long AssemblyEngine::asmAddCoordinates(
         :                   // no clobbered registers
     );
 
-    std::cout << "\n  [REAL ASM] Inline x86-64 executed:\n";
-    std::cout << "    movq " << coordA << ", %%rax\n";
-    std::cout << "    addq " << coordB << ", %%rax\n";
-    std::cout << "    Result in register: " << result << "\n\n";
+    cout << "\n  [REAL ASM] Inline x86-64 executed:\n";
+    cout << "    movq " << coordA << ", %%rax\n";
+    cout << "    addq " << coordB << ", %%rax\n";
+    cout << "    Result in register: " << result << "\n\n";
 
     logInstruction(
         pcToHex(regs.getPC()),
         "MOV",
-        "RAX, " + std::to_string(coordA) + "  [REAL ASM]"
+        "RAX, " + to_string(coordA) + "  [REAL ASM]"
     );
     regs.advancePC();
     logInstruction(
         pcToHex(regs.getPC()),
         "ADD",
-        "RAX, " + std::to_string(coordB) +
-        " = " + std::to_string(result) + "  [REAL ASM]"
+        "RAX, " + to_string(coordB) +
+        " = " + to_string(result) + "  [REAL ASM]"
     );
     regs.advancePC();
 
 #else
     // Fallback for non-GCC compilers
     result = coordA + coordB;
-    std::cout << "  [ASM SIM] ADD: "
+    cout << "  [ASM SIM] ADD: "
               << coordA << " + " << coordB
               << " = " << result << "\n";
     logInstruction(pcToHex(regs.getPC()), "ADD",
-        std::to_string(coordA) + ", " + std::to_string(coordB));
+        to_string(coordA) + ", " + to_string(coordB));
     regs.advancePC();
 #endif
 
@@ -245,32 +333,32 @@ long long AssemblyEngine::asmSubCoordinates(
         :
     );
 
-    std::cout << "\n  [REAL ASM] Inline x86-64 executed:\n";
-    std::cout << "    movq " << coordA << ", %%rax\n";
-    std::cout << "    subq " << coordB << ", %%rax\n";
-    std::cout << "    Result in register: " << result << "\n\n";
+    cout << "\n  [REAL ASM] Inline x86-64 executed:\n";
+    cout << "    movq " << coordA << ", %%rax\n";
+    cout << "    subq " << coordB << ", %%rax\n";
+    cout << "    Result in register: " << result << "\n\n";
 
     logInstruction(
         pcToHex(regs.getPC()),
         "MOV",
-        "RAX, " + std::to_string(coordA) + "  [REAL ASM]"
+        "RAX, " + to_string(coordA) + "  [REAL ASM]"
     );
     regs.advancePC();
     logInstruction(
         pcToHex(regs.getPC()),
         "SUB",
-        "RAX, " + std::to_string(coordB) +
-        " = " + std::to_string(result) + "  [REAL ASM]"
+        "RAX, " + to_string(coordB) +
+        " = " + to_string(result) + "  [REAL ASM]"
     );
     regs.advancePC();
 
 #else
     result = coordA - coordB;
-    std::cout << "  [ASM SIM] SUB: "
+    cout << "  [ASM SIM] SUB: "
               << coordA << " - " << coordB
               << " = " << result << "\n";
     logInstruction(pcToHex(regs.getPC()), "SUB",
-        std::to_string(coordA) + ", " + std::to_string(coordB));
+        to_string(coordA) + ", " + to_string(coordB));
     regs.advancePC();
 #endif
 
@@ -302,27 +390,27 @@ DisplacementData AssemblyEngine::computeDisplacement(
     int fromRow, int fromCol,
     int toRow,   int toCol)
 {
-    std::cout << "\n[AssemblyEngine] Computing displacement:\n";
-    std::cout << "  From: (" << fromRow << "," << fromCol << ")\n";
-    std::cout << "  To:   (" << toRow   << "," << toCol   << ")\n";
-    std::cout << "\n  Instruction trace:\n";
+    cout << "\n[AssemblyEngine] Computing displacement:\n";
+    cout << "  From: (" << fromRow << "," << fromCol << ")\n";
+    cout << "  To:   (" << toRow   << "," << toCol   << ")\n";
+    cout << "\n  Instruction trace:\n";
 
     long long R1, R2, R3, R4;
 
     // Step 1: Load source column coordinate
-    SIM_MOV(R1, (long long)fromCol, "R1", std::to_string(fromCol));
+    SIM_MOV(R1, (long long)fromCol, "R1", to_string(fromCol));
 
     // Step 2: Load destination column coordinate
-    SIM_MOV(R2, (long long)toCol,   "R2", std::to_string(toCol));
+    SIM_MOV(R2, (long long)toCol,   "R2", to_string(toCol));
 
     // Step 3: deltaX = toCol - fromCol  [REAL x86-64 ASM]
     long long deltaX = asmSubCoordinates(R2, R1);
 
     // Step 4: Load source row coordinate
-    SIM_MOV(R3, (long long)fromRow, "R3", std::to_string(fromRow));
+    SIM_MOV(R3, (long long)fromRow, "R3", to_string(fromRow));
 
     // Step 5: Load destination row coordinate
-    SIM_MOV(R4, (long long)toRow,   "R4", std::to_string(toRow));
+    SIM_MOV(R4, (long long)toRow,   "R4", to_string(toRow));
 
     // Step 6: deltaY = toRow - fromRow  [REAL x86-64 ASM]
     long long deltaY = asmSubCoordinates(R4, R3);
@@ -341,18 +429,18 @@ DisplacementData AssemblyEngine::computeDisplacement(
     // Step 10: CMP — check if displacement is zero
     bool isZero = SIM_CMP_JMP(sumSq, 0LL, "JZ", "R2", "0");
     if (isZero) {
-        std::cout << "  [JZ taken] Source = Destination. "
+        cout << "  [JZ taken] Source = Destination. "
                   << "No movement needed.\n";
     }
 
     // Euclidean displacement
-    double displacement = std::sqrt((double)sumSq);
+    double displacement = sqrt((double)sumSq);
 
     // Determine dominant direction for ASM operation label
-    std::string asmOp;
-    if      (std::abs(deltaX) > std::abs(deltaY))
+    string asmOp;
+    if      (abs(deltaX) > abs(deltaY))
         asmOp = "SUB R2, R1 (deltaX dominant)";
-    else if (std::abs(deltaY) > std::abs(deltaX))
+    else if (abs(deltaY) > abs(deltaX))
         asmOp = "SUB R4, R3 (deltaY dominant)";
     else
         asmOp = "SUB R2,R1 + SUB R4,R3 (diagonal)";
@@ -364,11 +452,11 @@ DisplacementData AssemblyEngine::computeDisplacement(
         asmOp
     };
 
-    std::cout << "\n  Results:\n";
-    std::cout << "    deltaX       = " << deltaX << "\n";
-    std::cout << "    deltaY       = " << deltaY << "\n";
-    std::cout << "    displacement = "
-              << std::fixed << std::setprecision(4)
+    cout << "\n  Results:\n";
+    cout << "    deltaX       = " << deltaX << "\n";
+    cout << "    deltaY       = " << deltaY << "\n";
+    cout << "    displacement = "
+              << fixed << setprecision(4)
               << displacement << " grid units\n\n";
 
     return currentDisp;
@@ -376,35 +464,35 @@ DisplacementData AssemblyEngine::computeDisplacement(
 
 // ── Display instruction log ───────────────────────────────────
 void AssemblyEngine::displayInstructionLog() const {
-    std::cout << "\n  Instruction Trace Log:\n";
-    std::cout << "  "
-              << std::left << std::setw(14) << "Address"
-              << std::setw(8) << "Opcode"
+    cout << "\n  Instruction Trace Log:\n";
+    cout << "  "
+              << left << setw(14) << "Address"
+              << setw(8) << "Opcode"
               << "Operands\n";
-    std::cout << "  " << std::string(60, '-') << "\n";
+    cout << "  " << string(60, '-') << "\n";
     for (const auto& ins : instructionLog) {
-        std::cout << "  "
-                  << std::left << std::setw(14) << ins.addr
-                  << std::setw(8) << ins.op
+        cout << "  "
+                  << left << setw(14) << ins.addr
+                  << setw(8) << ins.op
                   << ins.args << "\n";
     }
-    std::cout << "\n";
+    cout << "\n";
 }
 
 // ── Display displacement results ──────────────────────────────
 void AssemblyEngine::displayDisplacement() const {
-    std::cout << "\n  Displacement Computation Result:\n";
-    std::cout << "    deltaX       = " << currentDisp.dx << "\n";
-    std::cout << "    deltaY       = " << currentDisp.dy << "\n";
-    std::cout << "    displacement = "
-              << std::fixed << std::setprecision(4)
+    cout << "\n  Displacement Computation Result:\n";
+    cout << "    deltaX       = " << currentDisp.dx << "\n";
+    cout << "    deltaY       = " << currentDisp.dy << "\n";
+    cout << "    displacement = "
+              << fixed << setprecision(4)
               << currentDisp.total << " grid units\n";
-    std::cout << "    ASM op       = "
+    cout << "    ASM op       = "
               << currentDisp.asm_op << "\n\n";
 }
 
 // ── Accessors ─────────────────────────────────────────────────
-const std::vector<InstructionData>&
+const vector<InstructionData>&
 AssemblyEngine::getInstructionLog() const {
     return instructionLog;
 }

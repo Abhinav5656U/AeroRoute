@@ -12,7 +12,6 @@
  *               formatted JSON, and closes it.
  *               The website polls these files every 1 second.
  *
- * AUTHOR      : [Your Name] | MIT Academy of Engineering
  * ============================================================
  */
 
@@ -24,35 +23,36 @@
 #include <vector>
 #include <sstream>
 #include <iomanip>
-#include "../shared/Constants.h"
+#include "Constants.h"
+using namespace std;
 
 // ── Forward declarations of structs used in writes ────────────
 
 struct WaypointData {
     int         row;
     int         col;
-    std::string label;
+    string label;
 };
 
 struct EntityData {
-    std::string type;    // "warehouse" "customer" "charging" "drone" "package"
-    std::string label;
+    string type;    // "warehouse" "customer" "charging" "drone" "package"
+    string label;
     int         row;
     int         col;
     double      weight_kg; // used for package only
 };
 
 struct InstructionData {
-    std::string addr;
-    std::string op;
-    std::string args;
+    string addr;
+    string op;
+    string args;
 };
 
 struct DisplacementData {
     double      dx;
     double      dy;
     double      total;
-    std::string asm_op;
+    string asm_op;
 };
 
 struct GraphicsData {
@@ -64,12 +64,12 @@ struct GraphicsData {
 };
 
 // ── Helper: open file safely ──────────────────────────────────
-inline bool openFile(std::ofstream& f, const std::string& path) {
+inline bool openFile(ofstream& f, const string& path) {
     f.open(path);
     if (!f.is_open()) {
         // Try current directory as fallback
         // (useful when running from different working dirs)
-        std::string name = path.substr(path.find_last_of("/\\") + 1);
+        string name = path.substr(path.find_last_of("/\\") + 1);
         f.open(name);
         if (!f.is_open()) {
             return false;
@@ -85,28 +85,30 @@ inline bool openFile(std::ofstream& f, const std::string& path) {
 // ════════════════════════════════════════════════════════════
 inline void writeGridJson(
     int grid[GRID_ROWS][GRID_COLS],
-    const std::string labels[GRID_ROWS][GRID_COLS],
-    int nodeCount
+    const string labels[GRID_ROWS][GRID_COLS],
+    int nodeCount,
+    int rows = GRID_ROWS,
+    int cols = GRID_COLS
 ) {
-    std::ofstream f;
+    ofstream f;
     if (!openFile(f, JSON_GRID)) return;
 
     f << "{\n";
     f << "  \"source\": \"cpp_subject1\",\n";
-    f << "  \"rows\": " << GRID_ROWS << ",\n";
-    f << "  \"cols\": " << GRID_COLS << ",\n";
+    f << "  \"rows\": " << rows << ",\n";
+    f << "  \"cols\": " << cols << ",\n";
     f << "  \"node_count\": " << nodeCount << ",\n";
 
     // Write 2D cells array
     f << "  \"cells\": [\n";
-    for (int r = 0; r < GRID_ROWS; r++) {
+    for (int r = 0; r < rows; r++) {
         f << "    [";
-        for (int c = 0; c < GRID_COLS; c++) {
+        for (int c = 0; c < cols; c++) {
             f << grid[r][c];
-            if (c < GRID_COLS - 1) f << ",";
+            if (c < cols - 1) f << ",";
         }
         f << "]";
-        if (r < GRID_ROWS - 1) f << ",";
+        if (r < rows - 1) f << ",";
         f << "\n";
     }
     f << "  ],\n";
@@ -114,8 +116,8 @@ inline void writeGridJson(
     // Write labels object — only non-empty labels
     f << "  \"labels\": {\n";
     bool firstLabel = true;
-    for (int r = 0; r < GRID_ROWS; r++) {
-        for (int c = 0; c < GRID_COLS; c++) {
+    for (int r = 0; r < rows; r++) {
+        for (int c = 0; c < cols; c++) {
             if (!labels[r][c].empty()) {
                 if (!firstLabel) f << ",\n";
                 f << "    \"" << r << "," << c
@@ -135,11 +137,11 @@ inline void writeGridJson(
 // Writes:    data/route.json
 // ════════════════════════════════════════════════════════════
 inline void writeRouteJson(
-    const std::string&              routeType,
-    const std::vector<WaypointData>& waypoints,
+    const string&              routeType,
+    const vector<WaypointData>& waypoints,
     int                             currentIndex
 ) {
-    std::ofstream f;
+    ofstream f;
     if (!openFile(f, JSON_ROUTE)) return;
 
     f << "{\n";
@@ -178,14 +180,14 @@ inline void writeTelemetryJson(
     int         headingDeg,
     int         waypointCurrent,
     int         waypointTotal,
-    std::string droneModel,
-    std::string routeType,
-    std::string missionStatus
+    string droneModel,
+    string routeType,
+    string missionStatus
 ) {
-    std::ofstream f;
+    ofstream f;
     if (!openFile(f, JSON_TELEMETRY)) return;
 
-    f << std::fixed << std::setprecision(2);
+    f << fixed << setprecision(2);
     f << "{\n";
     f << "  \"source\": \"cpp_subject1_2\",\n";
     f << "  \"mission_status\": \"" << missionStatus << "\",\n";
@@ -221,10 +223,10 @@ inline void writeRegistersJson(
     bool                             SF,
     bool                             OF,
     bool                             PF,
-    const std::vector<InstructionData>& instructions,
+    const vector<InstructionData>& instructions,
     const DisplacementData&          disp
 ) {
-    std::ofstream f;
+    ofstream f;
     if (!openFile(f, JSON_REGISTERS)) return;
 
     f << "{\n";
@@ -264,7 +266,7 @@ inline void writeRegistersJson(
 
     // Displacement
     f << "  \"displacement\": {\n";
-    f << std::fixed << std::setprecision(4);
+    f << fixed << setprecision(4);
     f << "    \"dx\": "      << disp.dx     << ",\n";
     f << "    \"dy\": "      << disp.dy     << ",\n";
     f << "    \"total\": "   << disp.total  << ",\n";
@@ -280,10 +282,10 @@ inline void writeRegistersJson(
 // Writes:    data/mission.json
 // ════════════════════════════════════════════════════════════
 inline void writeMissionJson(
-    const std::vector<EntityData>& entities,
+    const vector<EntityData>& entities,
     const GraphicsData&            graphics
 ) {
-    std::ofstream f;
+    ofstream f;
     if (!openFile(f, JSON_MISSION)) return;
 
     f << "{\n";
@@ -311,7 +313,7 @@ inline void writeMissionJson(
     f << "  ],\n";
 
     // Graphics data
-    f << std::fixed << std::setprecision(4);
+    f << fixed << setprecision(4);
     f << "  \"graphics\": {\n";
     f << "    \"translate_x\": "      << graphics.translate_x      << ",\n";
     f << "    \"translate_y\": "      << graphics.translate_y      << ",\n";

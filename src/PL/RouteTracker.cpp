@@ -1,15 +1,16 @@
 /*
- * ============================================================
+ *
  * FILE        : RouteTracker.cpp
  * PROJECT     : AeroRoute — Autonomous Drone Delivery Simulator
  * SUBJECT     : Programming Lab | Course Code: 2310214L
  * TASK        : Task 2 — Dynamic Route Tracking
  * COURSE OUT  : CO2
- * ============================================================
+ *
  */
 
 #include "RouteTracker.h"
 #include <iostream>
+using namespace std;
 
 // ════════════════════════════════════════════════════════════
 // SINGLY LINKED LIST IMPLEMENTATION
@@ -31,7 +32,7 @@ SinglyLinkedList::~SinglyLinkedList() {
 
 // [PL CO2 - SLL: Add waypoint at tail]
 void SinglyLinkedList::addWaypoint(int row, int col,
-                                   const std::string& label) {
+                                   const string& label) {
     WaypointNode* node = new WaypointNode(row, col, label);
     if (!head) {
         head = tail = node;
@@ -40,7 +41,7 @@ void SinglyLinkedList::addWaypoint(int row, int col,
         tail       = node;
     }
     size++;
-    std::cout << "[SLL] Added waypoint: " << label
+    cout << "[SLL] Added waypoint: " << label
               << " (" << row << "," << col << ") "
               << "| Size: " << size << "\n";
 }
@@ -51,7 +52,7 @@ bool SinglyLinkedList::removeFirst() {
     WaypointNode* old = head;
     head = head->next;
     if (!head) tail = nullptr;
-    std::cout << "[SLL] Removed: " << old->label << "\n";
+    cout << "[SLL] Removed: " << old->label << "\n";
     delete old;
     size--;
     if (currentIndex > 0) currentIndex--;
@@ -69,7 +70,7 @@ bool SinglyLinkedList::removeLast() {
     }
     WaypointNode* cur = head;
     while (cur->next != tail) cur = cur->next;
-    std::cout << "[SLL] Removed: " << tail->label << "\n";
+    cout << "[SLL] Removed: " << tail->label << "\n";
     delete tail;
     tail = cur;
     tail->next = nullptr;
@@ -79,19 +80,19 @@ bool SinglyLinkedList::removeLast() {
 
 // [PL CO2 - SLL: Display forward traversal]
 void SinglyLinkedList::displayForward() const {
-    std::cout << "\n  [SLL] Forward Path:\n  HEAD -> ";
+    cout << "\n  [SLL] Forward Path:\n  HEAD -> ";
     WaypointNode* cur = head;
     int idx = 0;
     while (cur) {
         if (idx == currentIndex)
-            std::cout << "[*" << cur->label << "*]";
+            cout << "[*" << cur->label << "*]";
         else
-            std::cout << "[" << cur->label << "]";
-        if (cur->next) std::cout << " -> ";
+            cout << "[" << cur->label << "]";
+        if (cur->next) cout << " -> ";
         cur = cur->next;
         idx++;
     }
-    std::cout << " -> NULL\n\n";
+    cout << " -> NULL\n\n";
 }
 
 // [PL CO2 - SLL: Advance drone to next waypoint]
@@ -99,8 +100,8 @@ void SinglyLinkedList::advanceCurrent() {
     if (currentIndex < size - 1) currentIndex++;
 }
 
-std::vector<WaypointData> SinglyLinkedList::toVector() const {
-    std::vector<WaypointData> v;
+vector<WaypointData> SinglyLinkedList::toVector() const {
+    vector<WaypointData> v;
     WaypointNode* cur = head;
     while (cur) {
         v.push_back({ cur->row, cur->col, cur->label });
@@ -133,7 +134,7 @@ DoublyLinkedList::~DoublyLinkedList() {
 
 // [PL CO2 - DLL: Add waypoint (maintains prev pointers)]
 void DoublyLinkedList::addWaypoint(int row, int col,
-                                   const std::string& label) {
+                                   const string& label) {
     WaypointNode* node = new WaypointNode(row, col, label);
     if (!head) {
         head = tail = node;
@@ -143,38 +144,38 @@ void DoublyLinkedList::addWaypoint(int row, int col,
         tail       = node;
     }
     size++;
-    std::cout << "[DLL] Added waypoint: " << label
+    cout << "[DLL] Added waypoint: " << label
               << " (" << row << "," << col << ") "
               << "| Size: " << size << "\n";
 }
 
 // [PL CO2 - DLL: Display forward head to tail]
 void DoublyLinkedList::displayForward() const {
-    std::cout << "\n  [DLL] Forward (head -> tail):\n  NULL <- ";
+    cout << "\n  [DLL] Forward (head -> tail):\n  NULL <- ";
     WaypointNode* cur = head;
     int idx = 0;
     while (cur) {
         if (idx == currentIndex)
-            std::cout << "[*" << cur->label << "*]";
+            cout << "[*" << cur->label << "*]";
         else
-            std::cout << "[" << cur->label << "]";
-        if (cur->next) std::cout << " <-> ";
+            cout << "[" << cur->label << "]";
+        if (cur->next) cout << " <-> ";
         cur = cur->next;
         idx++;
     }
-    std::cout << " -> NULL\n";
+    cout << " -> NULL\n";
 }
 
 // [PL CO2 - DLL: Display backward tail to head]
 void DoublyLinkedList::displayBackward() const {
-    std::cout << "\n  [DLL] Return path (tail -> head):\n  NULL <- ";
+    cout << "\n  [DLL] Return path (tail -> head):\n  NULL <- ";
     WaypointNode* cur = tail;
     while (cur) {
-        std::cout << "[" << cur->label << "]";
-        if (cur->prev) std::cout << " <-> ";
+        cout << "[" << cur->label << "]";
+        if (cur->prev) cout << " <-> ";
         cur = cur->prev;
     }
-    std::cout << " -> NULL\n\n";
+    cout << " -> NULL\n\n";
 }
 
 // [PL CO2 - DLL: Advance drone, direction aware]
@@ -192,8 +193,8 @@ void DoublyLinkedList::reversDirection() {
     goingForward = !goingForward;
 }
 
-std::vector<WaypointData> DoublyLinkedList::toVector() const {
-    std::vector<WaypointData> v;
+vector<WaypointData> DoublyLinkedList::toVector() const {
+    vector<WaypointData> v;
     WaypointNode* cur = head;
     while (cur) {
         v.push_back({ cur->row, cur->col, cur->label });
@@ -231,7 +232,7 @@ CircularLinkedList::~CircularLinkedList() {
 
 // [PL CO2 - CLL: Add waypoint, maintain circular link]
 void CircularLinkedList::addWaypoint(int row, int col,
-                                     const std::string& label) {
+                                     const string& label) {
     WaypointNode* node = new WaypointNode(row, col, label);
     if (!head) {
         head    = node;
@@ -245,7 +246,7 @@ void CircularLinkedList::addWaypoint(int row, int col,
         node->next = head; // maintain circle
     }
     size++;
-    std::cout << "[CLL] Added patrol waypoint: " << label
+    cout << "[CLL] Added patrol waypoint: " << label
               << " (" << row << "," << col << ") "
               << "| Size: " << size << "\n";
 }
@@ -253,19 +254,19 @@ void CircularLinkedList::addWaypoint(int row, int col,
 // [PL CO2 - CLL: Display circular traversal]
 void CircularLinkedList::displayCircular() const {
     if (!head) return;
-    std::cout << "\n  [CLL] Patrol Route (circular):\n  ";
+    cout << "\n  [CLL] Patrol Route (circular):\n  ";
     WaypointNode* cur = head;
     int idx = 0;
     do {
         if (idx == currentIndex)
-            std::cout << "[*" << cur->label << "*]";
+            cout << "[*" << cur->label << "*]";
         else
-            std::cout << "[" << cur->label << "]";
-        std::cout << " -> ";
+            cout << "[" << cur->label << "]";
+        cout << " -> ";
         cur = cur->next;
         idx++;
     } while (cur != head);
-    std::cout << "(back to head)\n\n";
+    cout << "(back to head)\n\n";
 }
 
 // [PL CO2 - CLL: Advance to next patrol point, wraps to head]
@@ -275,8 +276,8 @@ void CircularLinkedList::advanceCurrent() {
     currentIndex = (currentIndex + 1) % size;
 }
 
-std::vector<WaypointData> CircularLinkedList::toVector() const {
-    std::vector<WaypointData> v;
+vector<WaypointData> CircularLinkedList::toVector() const {
+    vector<WaypointData> v;
     if (!head) return v;
     WaypointNode* cur = head;
     do {
@@ -295,14 +296,14 @@ int CircularLinkedList::getCurrent() const { return currentIndex; }
 
 RouteTracker::RouteTracker() : activeRouteType(ROUTE_SLL) {}
 
-void RouteTracker::setRouteType(const std::string& type) {
+void RouteTracker::setRouteType(const string& type) {
     activeRouteType = type;
-    std::cout << "[RouteTracker] Route type set to: "
+    cout << "[RouteTracker] Route type set to: "
               << type << "\n";
 }
 
 void RouteTracker::addWaypoint(int row, int col,
-                               const std::string& label) {
+                               const string& label) {
     if (activeRouteType == ROUTE_SLL) sll.addWaypoint(row,col,label);
     else if (activeRouteType == ROUTE_DLL) dll.addWaypoint(row,col,label);
     else if (activeRouteType == ROUTE_CLL) cll.addWaypoint(row,col,label);
@@ -325,7 +326,7 @@ void RouteTracker::displayRoute() const {
 
 // [PL CO2 - Export route to JSON for website]
 void RouteTracker::exportToJson() const {
-    std::vector<WaypointData> wps;
+    vector<WaypointData> wps;
     int currentIdx = 0;
 
     if (activeRouteType == ROUTE_SLL) {
@@ -340,9 +341,9 @@ void RouteTracker::exportToJson() const {
     }
 
     writeRouteJson(activeRouteType, wps, currentIdx);
-    std::cout << "[RouteTracker] Exported to route.json\n";
+    cout << "[RouteTracker] Exported to route.json\n";
 }
 
-std::string RouteTracker::getActiveType() const {
+string RouteTracker::getActiveType() const {
     return activeRouteType;
 }

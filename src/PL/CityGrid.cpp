@@ -1,11 +1,11 @@
 /*
- * ============================================================
+ *
  * FILE        : CityGrid.cpp
  * PROJECT     : AeroRoute — Autonomous Drone Delivery Simulator
  * SUBJECT     : Programming Lab | Course Code: 2310214L
  * TASK        : Task 1 — City Grid using 2D Arrays
  * COURSE OUT  : CO1
- * ============================================================
+ *
  */
 
 #include "CityGrid.h"
@@ -13,6 +13,7 @@
 #include <iomanip>
 #include <cstring>
 #include <cmath>
+using namespace std;
 
 // ── Constructor ───────────────────────────────────────────────
 // [PL CO1 - Task 1: Array Initialisation]
@@ -86,10 +87,10 @@ void CityGrid::rebuildAdjacency() {
 // [PL CO1 - Task 1: Array Insert Operation]
 // ════════════════════════════════════════════════════════════
 bool CityGrid::insertNode(int row, int col, int type,
-                          const std::string& label) {
+                          const string& label) {
     // Validate bounds
     if (!isValidCell(row, col)) {
-        std::cout << "[CityGrid] INSERT FAILED: ("
+        cout << "[CityGrid] INSERT FAILED: ("
                   << row << "," << col
                   << ") is out of bounds.\n";
         return false;
@@ -97,14 +98,14 @@ bool CityGrid::insertNode(int row, int col, int type,
 
     // Validate type
     if (type < CELL_WAREHOUSE || type > CELL_OBSTACLE) {
-        std::cout << "[CityGrid] INSERT FAILED: "
+        cout << "[CityGrid] INSERT FAILED: "
                   << "type " << type << " is not valid.\n";
         return false;
     }
 
     // Check if cell is already occupied
     if (grid[row][col] != CELL_EMPTY) {
-        std::cout << "[CityGrid] INSERT FAILED: ("
+        cout << "[CityGrid] INSERT FAILED: ("
                   << row << "," << col
                   << ") already has a node (type "
                   << grid[row][col] << ").\n";
@@ -114,7 +115,7 @@ bool CityGrid::insertNode(int row, int col, int type,
     // Insert
     grid[row][col]   = type;
     labels[row][col] = label.empty()
-        ? "Node-" + std::to_string(nodeCount + 1)
+        ? "Node-" + to_string(nodeCount + 1)
         : label;
 
     if (type != CELL_OBSTACLE) nodeCount++;
@@ -122,7 +123,7 @@ bool CityGrid::insertNode(int row, int col, int type,
     // Rebuild adjacency after structural change
     rebuildAdjacency();
 
-    std::cout << "[CityGrid] INSERT OK: "
+    cout << "[CityGrid] INSERT OK: "
               << labels[row][col]
               << " (type " << type << ") at ("
               << row << "," << col << ")\n";
@@ -135,17 +136,17 @@ bool CityGrid::insertNode(int row, int col, int type,
 // ════════════════════════════════════════════════════════════
 bool CityGrid::deleteNode(int row, int col) {
     if (!isValidCell(row, col)) {
-        std::cout << "[CityGrid] DELETE FAILED: out of bounds.\n";
+        cout << "[CityGrid] DELETE FAILED: out of bounds.\n";
         return false;
     }
 
     if (grid[row][col] == CELL_EMPTY) {
-        std::cout << "[CityGrid] DELETE FAILED: ("
+        cout << "[CityGrid] DELETE FAILED: ("
                   << row << "," << col << ") is already empty.\n";
         return false;
     }
 
-    std::cout << "[CityGrid] DELETE OK: removed "
+    cout << "[CityGrid] DELETE OK: removed "
               << labels[row][col]
               << " from (" << row << "," << col << ")\n";
 
@@ -163,14 +164,14 @@ bool CityGrid::deleteNode(int row, int col) {
 // [PL CO1 - Task 1: Array Update Operation]
 // ════════════════════════════════════════════════════════════
 bool CityGrid::updateNode(int row, int col, int newType,
-                          const std::string& newLabel) {
+                          const string& newLabel) {
     if (!isValidCell(row, col)) {
-        std::cout << "[CityGrid] UPDATE FAILED: out of bounds.\n";
+        cout << "[CityGrid] UPDATE FAILED: out of bounds.\n";
         return false;
     }
 
     if (grid[row][col] == CELL_EMPTY) {
-        std::cout << "[CityGrid] UPDATE FAILED: ("
+        cout << "[CityGrid] UPDATE FAILED: ("
                   << row << "," << col << ") is empty. "
                   << "Use INSERT first.\n";
         return false;
@@ -188,7 +189,7 @@ bool CityGrid::updateNode(int row, int col, int newType,
 
     rebuildAdjacency();
 
-    std::cout << "[CityGrid] UPDATE OK: ("
+    cout << "[CityGrid] UPDATE OK: ("
               << row << "," << col << ") type "
               << oldType << " -> " << newType << "\n";
     return true;
@@ -198,10 +199,10 @@ bool CityGrid::updateNode(int row, int col, int newType,
 // SEARCH
 // [PL CO1 - Task 1: Array Search Operation]
 // ════════════════════════════════════════════════════════════
-bool CityGrid::searchByLabel(const std::string& label,
+bool CityGrid::searchByLabel(const string& label,
                               int& foundRow,
                               int& foundCol) const {
-    std::cout << "[CityGrid] SEARCH: looking for \""
+    cout << "[CityGrid] SEARCH: looking for \""
               << label << "\"...\n";
 
     for (int r = 0; r < GRID_ROWS; r++) {
@@ -209,7 +210,7 @@ bool CityGrid::searchByLabel(const std::string& label,
             if (labels[r][c] == label) {
                 foundRow = r;
                 foundCol = c;
-                std::cout << "[CityGrid] SEARCH FOUND: \""
+                cout << "[CityGrid] SEARCH FOUND: \""
                           << label << "\" at ("
                           << r << "," << c << ")\n";
                 return true;
@@ -217,7 +218,7 @@ bool CityGrid::searchByLabel(const std::string& label,
         }
     }
 
-    std::cout << "[CityGrid] SEARCH: \""
+    cout << "[CityGrid] SEARCH: \""
               << label << "\" not found.\n";
     return false;
 }
@@ -227,28 +228,28 @@ bool CityGrid::searchByLabel(const std::string& label,
 // [PL CO1 - Task 1: Array Display Operation]
 // ════════════════════════════════════════════════════════════
 void CityGrid::displayGrid() const {
-    std::cout << "\n";
-    std::cout << "  AeroRoute City Grid (" << GRID_ROWS
+    cout << "\n";
+    cout << "  AeroRoute City Grid (" << GRID_ROWS
               << "x" << GRID_COLS << ") |\n";
-    std::cout << "  W=Warehouse C=Customer P=Charging "
+    cout << "  W=Warehouse C=Customer P=Charging "
               << "X=Obstacle .=Empty\n";
-    std::cout << "\n";
+    cout << "\n";
 
     // Column index header
-    std::cout << "     ";
+    cout << "     ";
     for (int c = 0; c < GRID_COLS; c++) {
-        std::cout << std::setw(3) << c;
+        cout << setw(3) << c;
     }
-    std::cout << "\n";
+    cout << "\n";
 
     // Top border
-    std::cout << "    +";
-    for (int c = 0; c < GRID_COLS; c++) std::cout << "---";
-    std::cout << "+\n";
+    cout << "    +";
+    for (int c = 0; c < GRID_COLS; c++) cout << "---";
+    cout << "+\n";
 
     // Grid rows
     for (int r = 0; r < GRID_ROWS; r++) {
-        std::cout << " " << std::setw(2) << r << " |";
+        cout << " " << setw(2) << r << " |";
         for (int c = 0; c < GRID_COLS; c++) {
             char sym = '.';
             switch (grid[r][c]) {
@@ -258,16 +259,16 @@ void CityGrid::displayGrid() const {
                 case CELL_OBSTACLE:  sym = 'X'; break;
                 default:             sym = '.'; break;
             }
-            std::cout << " " << sym << " ";
+            cout << " " << sym << " ";
         }
-        std::cout << "|\n";
+        cout << "|\n";
     }
 
     // Bottom border
-    std::cout << "    +";
-    for (int c = 0; c < GRID_COLS; c++) std::cout << "---";
-    std::cout << "+\n";
-    std::cout << "\n  Total nodes: " << nodeCount << "\n\n";
+    cout << "    +";
+    for (int c = 0; c < GRID_COLS; c++) cout << "---";
+    cout << "+\n";
+    cout << "\n  Total nodes: " << nodeCount << "\n\n";
 }
 
 // ════════════════════════════════════════════════════════════
@@ -276,21 +277,21 @@ void CityGrid::displayGrid() const {
 // Only shows the top-left 6x6 for readability
 // ════════════════════════════════════════════════════════════
 void CityGrid::displayAdjacency() const {
-    std::cout << "\n  Adjacency Matrix (first 6 nodes shown):\n";
-    std::cout << "  (1 = connected flight corridor exists)\n\n";
+    cout << "\n  Adjacency Matrix (first 6 nodes shown):\n";
+    cout << "  (1 = connected flight corridor exists)\n\n";
     int show = 6;
-    std::cout << "      ";
+    cout << "      ";
     for (int j = 0; j < show; j++)
-        std::cout << std::setw(3) << j;
-    std::cout << "\n";
+        cout << setw(3) << j;
+    cout << "\n";
     for (int i = 0; i < show; i++) {
-        std::cout << "  " << std::setw(3) << i << "  ";
+        cout << "  " << setw(3) << i << "  ";
         for (int j = 0; j < show; j++) {
-            std::cout << std::setw(3) << adjMatrix[i][j];
+            cout << setw(3) << adjMatrix[i][j];
         }
-        std::cout << "\n";
+        cout << "\n";
     }
-    std::cout << "\n";
+    cout << "\n";
 }
 
 // ── Accessors ─────────────────────────────────────────────────
@@ -299,7 +300,7 @@ int CityGrid::getCellType(int row, int col) const {
     return grid[row][col];
 }
 
-std::string CityGrid::getLabel(int row, int col) const {
+string CityGrid::getLabel(int row, int col) const {
     if (!isValidCell(row, col)) return "";
     return labels[row][col];
 }
@@ -316,11 +317,11 @@ bool CityGrid::isAdjacent(int r1,int c1,int r2,int c2) const {
 // Writes grid state to website/data/grid.json
 // Website reads this file every 1 second
 // ════════════════════════════════════════════════════════════
-void CityGrid::exportToJson() const {
+void CityGrid::exportToJson(int rows, int cols) const {
     writeGridJson(
         const_cast<int(*)[GRID_COLS]>(grid),
-        const_cast<std::string(*)[GRID_COLS]>(labels),
-        nodeCount
+        const_cast<string(*)[GRID_COLS]>(labels),
+        nodeCount, rows, cols
     );
-    std::cout << "[CityGrid] Exported to grid.json\n";
+    cout << "[CityGrid] Exported to grid.json\n";
 }

@@ -1,11 +1,23 @@
+/*
+ *
+ * FILE        : DeliveryScheduler.h
+ * PROJECT     : AeroRoute — Autonomous Drone Delivery Simulator
+ * SUBJECT     : Programming Lab | Course Code: 2310214L
+ * TASK        : Task 3 — Delivery Scheduling
+ * COURSE OUT  : CO3 — Implement a linked-list queue for pending
+ *               deliveries and a linked-list stack for completed drones.
+ *
+ */
+
 #ifndef DELIVERY_SCHEDULER_H
 #define DELIVERY_SCHEDULER_H
 
 #include <string>
+using namespace std;
 
 struct DeliveryRecord {
-    std::string droneSerial;
-    std::string destination;
+    string droneSerial;
+    string destination;
 };
 
 class LinkedListDeliveryQueue {
@@ -39,10 +51,10 @@ public:
 class LinkedListCompletedStack {
 private:
     struct Node {
-        std::string droneSerial;
+        string droneSerial;
         Node* next;
 
-        explicit Node(const std::string& serial)
+        explicit Node(const string& serial)
             : droneSerial(serial), next(nullptr) {}
     };
 
@@ -56,9 +68,9 @@ public:
     LinkedListCompletedStack(const LinkedListCompletedStack&) = delete;
     LinkedListCompletedStack& operator=(const LinkedListCompletedStack&) = delete;
 
-    void push(const std::string& droneSerial);
-    bool pop(std::string& droneSerial);
-    bool peek(std::string& droneSerial) const;
+    void push(const string& droneSerial);
+    bool pop(string& droneSerial);
+    bool peek(string& droneSerial) const;
     bool isEmpty() const;
     int getSize() const;
     void display() const;
@@ -70,8 +82,8 @@ private:
     LinkedListCompletedStack completedDrones;
 
 public:
-    bool enqueueDelivery(const std::string& droneSerial,
-                         const std::string& destination);
+    bool enqueueDelivery(const string& droneSerial,
+                         const string& destination);
     bool completeNextDelivery();
     void displayPendingDeliveries() const;
     void displayCompletedDrones() const;

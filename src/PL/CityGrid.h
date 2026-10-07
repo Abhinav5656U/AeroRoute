@@ -1,5 +1,4 @@
 /*
- * ============================================================
  * FILE        : CityGrid.h
  * PROJECT     : AeroRoute — Autonomous Drone Delivery Simulator
  * SUBJECT     : Programming Lab | Course Code: 2310214L
@@ -7,9 +6,8 @@
  * COURSE OUT  : CO1 — Model city grid/navigation space using
  *               1D/2D arrays and adjacency matrices.
  *               Implement insert delete update search display.
- * AUTHOR      : [Your Name] | MIT Academy of Engineering
  * DATE        : 2026-2027
- * ============================================================
+
  */
 
 #ifndef CITY_GRID_H
@@ -18,6 +16,7 @@
 #include <string>
 #include "../shared/Constants.h"
 #include "../shared/JsonWriter.h"
+using namespace std;
 
 // ════════════════════════════════════════════════════════════
 // [PL CO1 - Task 1: CityGrid Class]
@@ -34,7 +33,7 @@ private:
 
     // [PL CO1 - Task 1: String Array — node labels]
     // Stores user-defined label for each non-empty cell
-    std::string labels[GRID_ROWS][GRID_COLS];
+    string labels[GRID_ROWS][GRID_COLS];
 
     // [PL CO1 - Task 1: Adjacency Matrix]
     // Flattened: index = row*COLS + col
@@ -59,7 +58,7 @@ public:
     // Returns true on success, false if cell is out of bounds
     // or already occupied
     bool insertNode(int row, int col, int type,
-                    const std::string& label = "");
+                    const string& label = "");
 
     // DELETE: remove node at (row, col), reset to EMPTY
     // Returns true on success, false if cell was already empty
@@ -68,11 +67,11 @@ public:
     // UPDATE: change the type of an existing node
     // Returns true on success, false if cell is empty
     bool updateNode(int row, int col, int newType,
-                    const std::string& newLabel = "");
+                    const string& newLabel = "");
 
     // SEARCH: find a node by label, returns true and fills
     // foundRow/foundCol if found
-    bool searchByLabel(const std::string& label,
+    bool searchByLabel(const string& label,
                        int& foundRow, int& foundCol) const;
 
     // DISPLAY: print the grid to terminal in a readable format
@@ -83,13 +82,14 @@ public:
 
     // ── Accessors ────────────────────────────────────────────
     int getCellType(int row, int col)       const;
-    std::string getLabel(int row, int col)  const;
+    string getLabel(int row, int col)  const;
     int getNodeCount()                      const;
     bool isAdjacent(int r1,int c1,int r2,int c2) const;
 
     // ── JSON export ──────────────────────────────────────────
     // Writes current grid state to website/data/grid.json
-    void exportToJson() const;
+    void exportToJson(int rows = GRID_ROWS,
+                      int cols = GRID_COLS) const;
 };
 
 #endif // CITY_GRID_H

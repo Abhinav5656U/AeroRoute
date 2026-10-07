@@ -1,11 +1,9 @@
 /*
- * ============================================================
  * FILE        : GraphicsRenderer.cpp
  * PROJECT     : AeroRoute — Autonomous Drone Delivery Simulator
  * SUBJECT     : CG — Computer Graphics Lab
  * COURSE CODE : 2310218L
  * TASK        : Task 1 (CO1 CO2) + Task 2 (CO3 CO5)
- * ============================================================
  */
 
 #include "GraphicsRenderer.h"
@@ -13,6 +11,8 @@
 #include <iomanip>
 #include <cmath>
 #include <sstream>
+#include <stdexcept>
+using namespace std;
 
 // ── Singleton instance for GLUT callbacks ─────────────────────
 static GraphicsRenderer* g_instance = nullptr;
@@ -31,13 +31,19 @@ GraphicsRenderer::GraphicsRenderer()
     : windowWidth(900), windowHeight(700),
       cellSize(50.0f),
       gridOriginX(-230.0f), gridOriginY(230.0f),
+      activeRows(GRID_ROWS), activeCols(GRID_COLS),
+      task3EffectsEnabled(false), cityTexture(0),
+      routeType("SLL"),
       droneAngle(0.0f), droneScale(1.0f),
       translateX(0.0f), translateY(0.0f),
       rotationAngle(0.0f), scaleFactor(1.0f),
       vpXmin(-200.0f), vpXmax(200.0f),
       vpYmin(-200.0f), vpYmax(200.0f),
-      clippedSegments(0), totalSegments(0),
-      routeType("SLL")
+    clippedSegments(0), totalSegments(0),
+    deliveryDistance(0.0f), trafficDistance(0.0f),
+    lastDeliveryNode(0), lastTrafficNode(0), trafficDirection(1),
+    simulationActive(false), collisionHold(false),
+    simulationStatus("READY")
 {
     // Initialise grid to empty
     for (int r = 0; r < GRID_ROWS; r++)
@@ -50,7 +56,7 @@ GraphicsRenderer::GraphicsRenderer()
                    gridOriginY - 0.5f * cellSize };
     gfxData    = {0, 0, 0, 1.0, 0};
 
-    std::cout << "[CG] GraphicsRenderer initialised.\n";
+    cout << "[CG] GraphicsRenderer initialised.\n";
 }
 
 // ════════════════════════════════════════════════════════════
@@ -77,17 +83,17 @@ Point2D TransformMatrix::apply(const Point2D& p) const {
     return Point2D(x, y);
 }
 
-void TransformMatrix::display(const std::string& label) const {
-    std::cout << "\n  [CG CO3] Transform Matrix — " << label << ":\n";
+void TransformMatrix::display(const string& label) const {
+    cout << "\n  [CG CO3] Transform Matrix — " << label << ":\n";
     for (int i = 0; i < 3; i++) {
-        std::cout << "  | ";
+        cout << "  | ";
         for (int j = 0; j < 3; j++) {
-            std::cout << std::fixed << std::setprecision(4)
-                      << std::setw(10) << m[i][j] << " ";
+            cout << fixed << setprecision(4)
+                      << setw(10) << m[i][j] << " ";
         }
-        std::cout << "|\n";
+        cout << "|\n";
     }
-    std::cout << "\n";
+    cout << "\n";
 }
 
 // ════════════════════════════════════════════════════════════
@@ -95,23 +101,30 @@ void TransformMatrix::display(const std::string& label) const {
 // ════════════════════════════════════════════════════════════
 void GraphicsRenderer::loadGrid(
     int cells[GRID_ROWS][GRID_COLS],
-    std::string labels[GRID_ROWS][GRID_COLS])
+    string labels[GRID_ROWS][GRID_COLS],
+    int rows, int cols)
 {
+    if (rows < 1 || rows > GRID_ROWS ||
+        cols < 1 || cols > GRID_COLS) {
+        throw out_of_range("Active graphics grid dimensions are out of range.");
+    }
+    activeRows = rows;
+    activeCols = cols;
     for (int r = 0; r < GRID_ROWS; r++)
         for (int c = 0; c < GRID_COLS; c++) {
             gridCells[r][c]  = cells[r][c];
             gridLabels[r][c] = labels[r][c];
         }
-    std::cout << "[CG] Grid data loaded.\n";
+    cout << "[CG] Grid data loaded.\n";
 }
 
 void GraphicsRenderer::loadRoute(
-    const std::vector<Point2D>& points,
-    const std::string& type)
+    const vector<Point2D>& points,
+    const string& type)
 {
     routePoints = points;
     routeType   = type;
-    std::cout << "[CG] Route loaded: " << type
+    cout << "[CG] Route loaded: " << type
               << " with " << points.size() << " waypoints.\n";
 }
 
@@ -120,6 +133,48 @@ void GraphicsRenderer::setDronePosition(
 {
     dronePos   = gridToGL(row, col);
     droneAngle = angle;
+}
+
+void GraphicsRenderer::setSimulationPaths(
+    const vector<pair<int, int>>& deliveryPath,
+    const vector<pair<int, int>>& trafficPath)
+{
+    deliveryGridPath = deliveryPath;
+    trafficGridPath = trafficPath;
+    routePoints.clear();
+    for (const auto& cell : deliveryPath)
+        routePoints.push_back(gridToGL(cell.first, cell.second));
+
+    trafficPoints.clear();
+    for (const auto& cell : trafficPath)
+        trafficPoints.push_back(gridToGL(cell.first, cell.second));
+
+    if (!routePoints.empty()) dronePos = routePoints.front();
+    if (!trafficPoints.empty()) trafficPos = trafficPoints.front();
+    deliveryDistance = 0.0f;
+    trafficDistance = 0.0f;
+    lastDeliveryNode = 0;
+    lastTrafficNode = 0;
+    trafficDirection = 1;
+    collisionHold = false;
+    simulationActive = routePoints.size() > 1;
+    simulationStatus = simulationActive ? "FLYING" : "NO ROUTE";
+}
+
+void GraphicsRenderer::setSimulationCallback(
+    function<void(int, int, bool, bool)> callback)
+{
+    simulationCallback = callback;
+}
+
+void GraphicsRenderer::setTask3EffectsEnabled(bool enabled) {
+    task3EffectsEnabled = enabled;
+}
+
+void GraphicsRenderer::toggleTask3Effects() {
+    task3EffectsEnabled = !task3EffectsEnabled;
+    cout << "[CG CO6 - Task 3] Texture and lighting effects "
+         << (task3EffectsEnabled ? "enabled" : "disabled") << ".\n";
 }
 
 // ── Coordinate conversion ─────────────────────────────────────
@@ -183,7 +238,7 @@ void GraphicsRenderer::drawQuad(
 
 // [CG CO2 - Task 1: OpenGL polygon primitive]
 void GraphicsRenderer::drawPolygon(
-    const std::vector<Point2D>& vertices,
+    const vector<Point2D>& vertices,
     float r, float g, float b,
     bool filled)
 {
@@ -237,7 +292,7 @@ void GraphicsRenderer::drawWarehouseNode(float cx, float cy) {
     drawPoint(cx - hs, cy - hs, 5.0f, 1.0f, 0.8f, 0.0f);
     drawPoint(cx + hs, cy - hs, 5.0f, 1.0f, 0.8f, 0.0f);
     // Roof lines (polygon)
-    std::vector<Point2D> roof = {
+    vector<Point2D> roof = {
         {cx - hs*1.1f, cy + hs*0.5f},
         {cx,           cy + hs*1.2f},
         {cx + hs*1.1f, cy + hs*0.5f}
@@ -261,7 +316,7 @@ void GraphicsRenderer::drawCustomerNode(float cx, float cy) {
 // [CG CO2 - Charging Pad: hexagon polygon + lightning]
 void GraphicsRenderer::drawChargingNode(float cx, float cy) {
     // Hexagon using polygon primitive
-    std::vector<Point2D> hex;
+    vector<Point2D> hex;
     float r = cellSize * 0.35f;
     for (int i = 0; i < 6; i++) {
         float a = i * 60.0f * 3.14159265f / 180.0f;
@@ -348,7 +403,7 @@ void GraphicsRenderer::drawDroneBody(
 
     // [CG CO2 - Direction arrow as polygon]
     float arrowH = armLen * 0.35f;
-    std::vector<Point2D> arrow = {
+    vector<Point2D> arrow = {
         { 0.0f,         arrowH      },
         {-armLen*0.12f, arrowH*0.55f},
         { armLen*0.12f, arrowH*0.55f}
@@ -368,6 +423,20 @@ void GraphicsRenderer::drawDroneBody(
     glPopMatrix();
 }
 
+void GraphicsRenderer::drawTrafficDrone() {
+    const float arm = cellSize * 0.16f;
+    drawLine(trafficPos.x - arm, trafficPos.y,
+             trafficPos.x + arm, trafficPos.y,
+             1.0f, 0.58f, 0.12f);
+    drawLine(trafficPos.x, trafficPos.y - arm,
+             trafficPos.x, trafficPos.y + arm,
+             1.0f, 0.58f, 0.12f);
+    drawCircle(trafficPos.x, trafficPos.y,
+               cellSize * 0.11f, 0.9f, 0.34f, 0.12f, true);
+    drawCircle(trafficPos.x, trafficPos.y,
+               cellSize * 0.11f, 1.0f, 0.78f, 0.34f, false);
+}
+
 // ════════════════════════════════════════════════════════════
 // DRAW GRID LINES
 // [CG CO1 - Task 1: Grid using GL_LINES]
@@ -376,24 +445,98 @@ void GraphicsRenderer::drawGridLines() {
     glColor3f(0.1f, 0.18f, 0.28f);
     glLineWidth(0.8f);
 
-    float totalW = GRID_COLS * cellSize;
-    float totalH = GRID_ROWS * cellSize;
+    float totalW = activeCols * cellSize;
+    float totalH = activeRows * cellSize;
 
     // Vertical lines
     glBegin(GL_LINES);
-    for (int c = 0; c <= GRID_COLS; c++) {
+    for (int c = 0; c <= activeCols; c++) {
         float x = gridOriginX + c * cellSize;
         glVertex2f(x, gridOriginY);
         glVertex2f(x, gridOriginY - totalH);
     }
     // Horizontal lines
-    for (int r = 0; r <= GRID_ROWS; r++) {
+    for (int r = 0; r <= activeRows; r++) {
         float y = gridOriginY - r * cellSize;
         glVertex2f(gridOriginX,          y);
         glVertex2f(gridOriginX + totalW, y);
     }
     glEnd();
     glLineWidth(1.5f);
+}
+
+// [CG CO6 - Task 3: procedural texture mapping for the city surface]
+void GraphicsRenderer::drawTask3TexturedSurface() {
+    if (cityTexture == 0) {
+        unsigned char texels[32 * 32 * 3];
+        for (int y = 0; y < 32; ++y) {
+            for (int x = 0; x < 32; ++x) {
+                const bool tile = ((x / 4 + y / 4) % 2) == 0;
+                const unsigned char shade = tile ? 55 : 67;
+                const int offset = (y * 32 + x) * 3;
+                texels[offset] = static_cast<unsigned char>(shade - 10);
+                texels[offset + 1] = shade;
+                texels[offset + 2] = static_cast<unsigned char>(shade + 18);
+            }
+        }
+
+        glGenTextures(1, &cityTexture);
+        glBindTexture(GL_TEXTURE_2D, cityTexture);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 32, 32, 0,
+                     GL_RGB, GL_UNSIGNED_BYTE, texels);
+    }
+
+    glEnable(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, cityTexture);
+    glColor3f(1.0f, 1.0f, 1.0f);
+    const float right = gridOriginX + activeCols * cellSize;
+    const float bottom = gridOriginY - activeRows * cellSize;
+    glBegin(GL_QUADS);
+        glTexCoord2f(0.0f, 0.0f); glVertex2f(gridOriginX, gridOriginY);
+        glTexCoord2f(static_cast<float>(activeCols), 0.0f);
+        glVertex2f(right, gridOriginY);
+        glTexCoord2f(static_cast<float>(activeCols),
+                     static_cast<float>(activeRows));
+        glVertex2f(right, bottom);
+        glTexCoord2f(0.0f, static_cast<float>(activeRows));
+        glVertex2f(gridOriginX, bottom);
+    glEnd();
+    glBindTexture(GL_TEXTURE_2D, 0);
+    glDisable(GL_TEXTURE_2D);
+}
+
+// [CG CO6 - Task 3: smooth colored light falloff for city landmarks]
+void GraphicsRenderer::drawTask3Lighting() {
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    for (int row = 0; row < activeRows; ++row) {
+        for (int col = 0; col < activeCols; ++col) {
+            const int type = gridCells[row][col];
+            if (type != CELL_WAREHOUSE && type != CELL_CHARGING) continue;
+
+            const Point2D center = gridToGL(row, col);
+            const float red = type == CELL_WAREHOUSE ? 0.20f : 0.10f;
+            const float green = type == CELL_WAREHOUSE ? 0.58f : 0.62f;
+            const float blue = type == CELL_WAREHOUSE ? 1.00f : 0.78f;
+            const float radius = cellSize * 1.8f;
+            glBegin(GL_TRIANGLE_FAN);
+                glColor4f(red, green, blue, 0.30f);
+                glVertex2f(center.x, center.y);
+                for (int step = 0; step <= 40; ++step) {
+                    const float angle =
+                        6.28318530718f * static_cast<float>(step) / 40.0f;
+                    glColor4f(red, green, blue, 0.0f);
+                    glVertex2f(center.x + cosf(angle) * radius,
+                               center.y + sinf(angle) * radius);
+                }
+            glEnd();
+        }
+    }
+    glDisable(GL_BLEND);
 }
 
 // ════════════════════════════════════════════════════════════
@@ -427,7 +570,7 @@ void GraphicsRenderer::drawCell(int row, int col) {
 // [CG CO1 - Task 1: Legend using primitives]
 // ════════════════════════════════════════════════════════════
 void GraphicsRenderer::drawLegend() {
-    float lx = gridOriginX + GRID_COLS * cellSize + 20.0f;
+    float lx = gridOriginX + activeCols * cellSize + 20.0f;
     float ly = gridOriginY;
 
     glColor3f(0.7f, 0.9f, 1.0f);
@@ -469,14 +612,14 @@ void GraphicsRenderer::drawHUD() {
     float hy =  330.0f;
 
     // HUD background quad
-    drawQuad(hx, hy, 140.0f, 100.0f,
+    drawQuad(hx, hy, 180.0f, 116.0f,
              0.05f, 0.08f, 0.15f, true);
-    drawQuad(hx, hy, 140.0f, 100.0f,
+    drawQuad(hx, hy, 180.0f, 116.0f,
              0.0f, 0.4f, 0.8f, false);
 
     glColor3f(0.0f, 0.8f, 1.0f);
 
-    auto hudText = [](float x, float y, const std::string& s) {
+    auto hudText = [](float x, float y, const string& s) {
         glRasterPos2f(x, y);
         for (char c : s)
             glutBitmapCharacter(GLUT_BITMAP_HELVETICA_10, c);
@@ -486,18 +629,22 @@ void GraphicsRenderer::drawHUD() {
 
     glColor3f(0.6f, 0.8f, 0.6f);
     hudText(hx + 6, hy - 32,
-        "TX:" + std::to_string((int)translateX));
+        "TX:" + to_string((int)translateX));
     hudText(hx + 6, hy - 44,
-        "TY:" + std::to_string((int)translateY));
+        "TY:" + to_string((int)translateY));
     hudText(hx + 6, hy - 56,
-        "RZ:" + std::to_string((int)rotationAngle) + " deg");
+        "RZ:" + to_string((int)rotationAngle) + " deg");
     hudText(hx + 6, hy - 68,
-        "SC:" + std::to_string(scaleFactor).substr(0,4));
+        "SC:" + to_string(scaleFactor).substr(0,4));
 
     glColor3f(1.0f, 0.6f, 0.2f);
     hudText(hx + 6, hy - 84,
-        "Clipped: " + std::to_string(clippedSegments) +
-        "/" + std::to_string(totalSegments));
+        "Clipped: " + to_string(clippedSegments) +
+        "/" + to_string(totalSegments));
+    glColor3f(collisionHold ? 1.0f : 0.4f,
+              collisionHold ? 0.55f : 0.9f,
+              0.35f);
+    hudText(hx + 6, hy - 100, "Mission: " + simulationStatus);
 }
 
 // ════════════════════════════════════════════════════════════
@@ -515,7 +662,7 @@ TransformMatrix GraphicsRenderer::makeTranslation(
     TransformMatrix T;
     T.m[0][2] = tx;
     T.m[1][2] = ty;
-    std::cout << "[CG CO3] Translation: tx=" << tx
+    cout << "[CG CO3] Translation: tx=" << tx
               << " ty=" << ty << "\n";
     T.display("Translation");
     return T;
@@ -532,7 +679,7 @@ TransformMatrix GraphicsRenderer::makeRotation(float angleDeg) {
     TransformMatrix R;
     R.m[0][0] =  c;  R.m[0][1] = -s;
     R.m[1][0] =  s;  R.m[1][1] =  c;
-    std::cout << "[CG CO3] Rotation: angle="
+    cout << "[CG CO3] Rotation: angle="
               << angleDeg << " deg\n";
     R.display("Rotation");
     return R;
@@ -548,7 +695,7 @@ TransformMatrix GraphicsRenderer::makeScaling(
     TransformMatrix S;
     S.m[0][0] = sx;
     S.m[1][1] = sy;
-    std::cout << "[CG CO3] Scaling: sx=" << sx
+    cout << "[CG CO3] Scaling: sx=" << sx
               << " sy=" << sy << "\n";
     S.display("Scaling");
     return S;
@@ -575,13 +722,19 @@ void GraphicsRenderer::applyTransform(
     TransformMatrix M = T * R * S;
     M.display("Composed TRS (T*R*S)");
 
-    // Apply to drone position
-    Point2D newPos = M.apply(dronePos);
-    dronePos.x    += tx;
-    dronePos.y    += ty;
+    // Transform the delivery route as well so the animated drone remains
+    // aligned with its displayed path.
+    for (Point2D& point : routePoints) {
+        point = M.apply(point);
+    }
+    if (!routePoints.empty()) {
+        dronePos = routePoints.front();
+    } else {
+        dronePos = M.apply(dronePos);
+    }
     droneAngle     = angleDeg;
 
-    std::cout << "[CG CO3] Drone position after transform: ("
+    cout << "[CG CO3] Drone position after transform: ("
               << dronePos.x << ", " << dronePos.y << ")\n";
 
     // Update JSON data
@@ -597,30 +750,30 @@ void GraphicsRenderer::translateDrone(float dx, float dy) {
     dronePos.y += dy;
     translateX  = dx;
     translateY  = dy;
-    std::cout << "[CG CO3] Translate drone: +"
+    cout << "[CG CO3] Translate drone: +"
               << dx << ", +" << dy << "\n";
 }
 
 void GraphicsRenderer::rotateDroneTo(float targetAngle) {
     droneAngle    = targetAngle;
     rotationAngle = targetAngle;
-    std::cout << "[CG CO3] Rotate drone to: "
+    cout << "[CG CO3] Rotate drone to: "
               << targetAngle << " deg\n";
 }
 
 void GraphicsRenderer::scaleView(float factor) {
     scaleFactor = factor;
     droneScale  = factor;
-    std::cout << "[CG CO3] Scale factor: " << factor << "\n";
+    cout << "[CG CO3] Scale factor: " << factor << "\n";
 }
 
 void GraphicsRenderer::displayTransformInfo() const {
-    std::cout << "\n  [CG CO3] Current Transform State:\n";
-    std::cout << "    Translation: ("
+    cout << "\n  [CG CO3] Current Transform State:\n";
+    cout << "    Translation: ("
               << translateX << ", " << translateY << ")\n";
-    std::cout << "    Rotation:    "
+    cout << "    Rotation:    "
               << rotationAngle << " degrees\n";
-    std::cout << "    Scale:       "
+    cout << "    Scale:       "
               << scaleFactor << "\n\n";
 }
 
@@ -635,7 +788,7 @@ void GraphicsRenderer::setViewport(
 {
     vpXmin = xmin; vpXmax = xmax;
     vpYmin = ymin; vpYmax = ymax;
-    std::cout << "[CG CO5] Viewport set: "
+    cout << "[CG CO5] Viewport set: "
               << "X[" << xmin << "," << xmax << "] "
               << "Y[" << ymin << "," << ymax << "]\n";
 }
@@ -746,7 +899,6 @@ bool GraphicsRenderer::clipAndDrawLine(
 void GraphicsRenderer::clipAndDrawRoute() {
     if (routePoints.size() < 2) return;
 
-    std::cout << "\n[CG CO5] Clipping route segments:\n";
     clippedSegments = 0;
     totalSegments   = 0;
 
@@ -756,17 +908,8 @@ void GraphicsRenderer::clipAndDrawRoute() {
         float x2 = routePoints[i + 1].x;
         float y2 = routePoints[i + 1].y;
 
-        int code1 = computeRegionCode(x1, y1);
-        int code2 = computeRegionCode(x2, y2);
-
-        std::cout << "  Seg[" << i << "]: ("
-                  << x1 << "," << y1 << ") -> ("
-                  << x2 << "," << y2 << ") "
-                  << "codes=[" << code1 << "," << code2 << "] ";
-
-        bool vis = clipAndDrawLine(x1, y1, x2, y2,
-                                   0.0f, 0.8f, 1.0f);
-        std::cout << (vis ? "VISIBLE" : "CLIPPED") << "\n";
+        clipAndDrawLine(x1, y1, x2, y2,
+                0.0f, 0.8f, 1.0f);
     }
 
     // For CLL — connect last to first
@@ -779,18 +922,16 @@ void GraphicsRenderer::clipAndDrawRoute() {
     }
 
     gfxData.clipped_segments = clippedSegments;
-    displayClippingInfo();
-    exportToJson();
 }
 
 void GraphicsRenderer::displayClippingInfo() const {
-    std::cout << "\n  [CG CO5] Clipping Results:\n";
-    std::cout << "    Viewport: X["
+    cout << "\n  [CG CO5] Clipping Results:\n";
+    cout << "    Viewport: X["
               << vpXmin << "," << vpXmax << "] Y["
               << vpYmin << "," << vpYmax << "]\n";
-    std::cout << "    Total segments:   " << totalSegments   << "\n";
-    std::cout << "    Clipped out:      " << clippedSegments << "\n";
-    std::cout << "    Visible segments: "
+    cout << "    Total segments:   " << totalSegments   << "\n";
+    cout << "    Clipped out:      " << clippedSegments << "\n";
+    cout << "    Visible segments: "
               << (totalSegments - clippedSegments) << "\n\n";
 }
 
@@ -806,12 +947,17 @@ void GraphicsRenderer::renderScene() {
     // Apply global view scale (zoom)
     glScalef(scaleFactor, scaleFactor, 1.0f);
 
+    if (task3EffectsEnabled) {
+        drawTask3TexturedSurface();
+        drawTask3Lighting();
+    }
+
     // Draw grid lines
     drawGridLines();
 
     // Draw all non-empty cells
-    for (int r = 0; r < GRID_ROWS; r++)
-        for (int c = 0; c < GRID_COLS; c++)
+    for (int r = 0; r < activeRows; r++)
+        for (int c = 0; c < activeCols; c++)
             drawCell(r, c);
 
     // Draw clipped route path
@@ -828,6 +974,7 @@ void GraphicsRenderer::renderScene() {
 
     // Draw drone
     drawDroneBody(dronePos.x, dronePos.y, droneAngle);
+    if (!trafficPoints.empty()) drawTrafficDrone();
 
     // Draw viewport boundary (clipping window visible)
     glEnable(GL_LINE_STIPPLE);
@@ -867,7 +1014,7 @@ void GraphicsRenderer::reshapeCallback(int w, int h) {
 
 // [CG CO3 - Keyboard: interactive transforms]
 void GraphicsRenderer::keyboardCallback(
-    unsigned char key, int x, int y)
+    unsigned char key, int, int)
 {
     GraphicsRenderer* r = g_instance;
     if (!r) return;
@@ -897,19 +1044,162 @@ void GraphicsRenderer::keyboardCallback(
         case 'j':
             r->exportToJson();
             break;
+        // [CG CO6 - Task 3: toggle surface texture and colored lighting]
+        case 't':
+        case 'T':
+            r->toggleTask3Effects();
+            break;
         // Quit
         case 27: // ESC
-            std::cout << "[CG] Window closed.\n";
-            exit(0);
+            cout << "[CG] Window closed.\n";
+            glutLeaveMainLoop();
     }
 
     r->exportToJson();
     glutPostRedisplay();
 }
 
-void GraphicsRenderer::timerCallback(int value) {
+void GraphicsRenderer::timerCallback(int) {
+    if (!g_instance) return;
+    g_instance->updateSimulation();
     glutPostRedisplay();
     glutTimerFunc(33, timerCallback, 0); // ~30fps
+}
+
+float GraphicsRenderer::pathLength(const vector<Point2D>& points) const {
+    float length = 0.0f;
+    for (size_t index = 1; index < points.size(); ++index) {
+        const float dx = points[index].x - points[index - 1].x;
+        const float dy = points[index].y - points[index - 1].y;
+        length += sqrtf(dx * dx + dy * dy);
+    }
+    return length;
+}
+
+Point2D GraphicsRenderer::pointAlongPath(
+    const vector<Point2D>& points, float distance) const
+{
+    if (points.empty()) return Point2D();
+    if (distance <= 0.0f) return points.front();
+
+    for (size_t index = 1; index < points.size(); ++index) {
+        const Point2D& start = points[index - 1];
+        const Point2D& end = points[index];
+        const float dx = end.x - start.x;
+        const float dy = end.y - start.y;
+        const float segmentLength = sqrtf(dx * dx + dy * dy);
+        if (distance <= segmentLength) {
+            const float ratio = segmentLength == 0.0f
+                ? 1.0f : distance / segmentLength;
+            return Point2D(start.x + dx * ratio,
+                           start.y + dy * ratio);
+        }
+        distance -= segmentLength;
+    }
+    return points.back();
+}
+
+void GraphicsRenderer::updateSimulation() {
+    if (!simulationActive) return;
+
+    const float deltaSeconds = 0.033f;
+    const bool hasTrafficRoute = trafficPoints.size() > 1;
+    float nextTrafficDistance = trafficDistance;
+    int nextTrafficDirection = trafficDirection;
+    Point2D nextTrafficPosition = trafficPos;
+    bool trafficCanMove = true;
+    if (hasTrafficRoute) {
+        const float trafficLength = pathLength(trafficPoints);
+        nextTrafficDistance =
+            trafficDistance + trafficDirection * cellSize * deltaSeconds;
+        if (nextTrafficDistance >= trafficLength) {
+            nextTrafficDistance = trafficLength;
+            nextTrafficDirection = -1;
+        } else if (nextTrafficDistance <= 0.0f) {
+            nextTrafficDistance = 0.0f;
+            nextTrafficDirection = 1;
+        }
+        nextTrafficPosition =
+            pointAlongPath(trafficPoints, nextTrafficDistance);
+    }
+
+    const float deliveryLength = pathLength(routePoints);
+    const float nextDistance = min(
+        deliveryLength, deliveryDistance + cellSize * 0.8f * deltaSeconds);
+    const Point2D nextPosition = pointAlongPath(routePoints, nextDistance);
+    const auto separated = [this](const Point2D& first,
+                                  const Point2D& second) {
+        const float dx = first.x - second.x;
+        const float dy = first.y - second.y;
+        return sqrtf(dx * dx + dy * dy) >= cellSize * 0.62f;
+    };
+
+    if (hasTrafficRoute) {
+        trafficCanMove = separated(dronePos, nextTrafficPosition);
+        if (!trafficCanMove) {
+            nextTrafficDistance = trafficDistance;
+            nextTrafficDirection = trafficDirection;
+            nextTrafficPosition = trafficPos;
+        }
+    }
+    const bool deliveryCanMove =
+        !hasTrafficRoute || separated(nextPosition, nextTrafficPosition);
+    collisionHold = hasTrafficRoute &&
+                    (!trafficCanMove || !deliveryCanMove);
+
+    if (hasTrafficRoute && trafficCanMove) {
+        trafficDistance = nextTrafficDistance;
+        trafficDirection = nextTrafficDirection;
+        trafficPos = nextTrafficPosition;
+        const int trafficNode = min(
+            static_cast<int>(trafficGridPath.size()) - 1,
+            static_cast<int>(trafficDistance / cellSize));
+        if (trafficNode != lastTrafficNode) {
+            lastTrafficNode = trafficNode;
+            if (simulationCallback) {
+                simulationCallback(
+                    trafficGridPath[trafficNode].first,
+                    trafficGridPath[trafficNode].second,
+                    true, false);
+            }
+        }
+    }
+
+    if (!deliveryCanMove) {
+        simulationStatus = "YIELDING";
+        return;
+    }
+
+    const Point2D previousPosition = dronePos;
+    deliveryDistance = nextDistance;
+    dronePos = nextPosition;
+    droneAngle = atan2f(dronePos.y - previousPosition.y,
+                        dronePos.x - previousPosition.x) *
+                 180.0f / 3.14159265f;
+    simulationStatus = "FLYING";
+
+    const float routeProgress = deliveryLength > 0.0f
+        ? deliveryDistance / deliveryLength : 1.0f;
+    const int deliveryNode = min(
+        static_cast<int>(deliveryGridPath.size()) - 1,
+        static_cast<int>(routeProgress *
+                         (deliveryGridPath.size() - 1) + 0.0001f));
+    while (lastDeliveryNode < deliveryNode) {
+        ++lastDeliveryNode;
+        const bool delivered = lastDeliveryNode ==
+            static_cast<int>(deliveryGridPath.size()) - 1;
+        if (simulationCallback) {
+            simulationCallback(
+                deliveryGridPath[lastDeliveryNode].first,
+                deliveryGridPath[lastDeliveryNode].second,
+                false, delivered);
+        }
+    }
+
+    if (deliveryDistance >= deliveryLength) {
+        simulationActive = false;
+        simulationStatus = "DELIVERED";
+    }
 }
 
 // ── Accessors ─────────────────────────────────────────────────
@@ -926,14 +1216,14 @@ int   GraphicsRenderer::getClippedCount()  const { return clippedSegments; }
 void GraphicsRenderer::exportToJson() const {
     // We write graphics data to mission.json
     // Entities vector is empty here — PSOOP fills that
-    std::vector<EntityData> emptyEntities;
+    vector<EntityData> emptyEntities;
     GraphicsData gd = {
         translateX, translateY,
         rotationAngle, scaleFactor,
         clippedSegments
     };
     writeMissionJson(emptyEntities, gd);
-    std::cout << "[CG] Exported graphics data to mission.json\n";
+    cout << "[CG] Exported graphics data to mission.json\n";
 }
 
 // ════════════════════════════════════════════════════════════
@@ -941,12 +1231,14 @@ void GraphicsRenderer::exportToJson() const {
 // ════════════════════════════════════════════════════════════
 void GraphicsRenderer::launchWindow(
     int argc, char** argv,
-    const std::string& title)
+    const string& title)
 {
     GraphicsRenderer::setInstance(this);
 
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB);
+    glutSetOption(GLUT_ACTION_ON_WINDOW_CLOSE,
+                  GLUT_ACTION_GLUTMAINLOOP_RETURNS);
     glutInitWindowSize(windowWidth, windowHeight);
     glutInitWindowPosition(100, 100);
     glutCreateWindow(title.c_str());
@@ -960,14 +1252,18 @@ void GraphicsRenderer::launchWindow(
     glutKeyboardFunc(keyboardCallback);
     glutTimerFunc(33, timerCallback, 0);
 
-    std::cout << "\n[CG] OpenGL window launched.\n";
-    std::cout << "  Controls:\n";
-    std::cout << "  W/A/S/D  — translate drone\n";
-    std::cout << "  Q/E      — rotate drone\n";
-    std::cout << "  +/-      — zoom in/out\n";
-    std::cout << "  C/V      — shrink/grow clip viewport\n";
-    std::cout << "  J        — export JSON now\n";
-    std::cout << "  ESC      — close window\n\n";
+    cout << "\n[CG] OpenGL window launched.\n";
+    cout << "  Controls:\n";
+    cout << "  W/A/S/D  — translate drone\n";
+    cout << "  Q/E      — rotate drone\n";
+    cout << "  +/-      — zoom in/out\n";
+    cout << "  C/V      — shrink/grow clip viewport\n";
+    cout << "  T        — toggle Task 3 surface texture and colored lights\n";
+    cout << "  J        — export JSON now\n";
+    cout << "  ESC      — close window\n\n";
 
     glutMainLoop();
+    const int windowId = glutGetWindow();
+    if (windowId != 0) glutDestroyWindow(windowId);
+    GraphicsRenderer::setInstance(nullptr);
 }

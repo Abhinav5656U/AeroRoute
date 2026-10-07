@@ -1,5 +1,5 @@
 /*
- * ============================================================
+ *
  * FILE        : Package.h
  * PROJECT     : AeroRoute — Autonomous Drone Delivery Simulator
  * SUBJECT     : PSOOP — Problem Solving Using OOP
@@ -7,7 +7,7 @@
  * TASK        : Task 1 — CO1
  * DESCRIPTION : Standalone entity — not a Location subclass.
  *               Represents a physical parcel the drone carries.
- * ============================================================
+ *
  */
 
 #ifndef PACKAGE_H
@@ -15,6 +15,7 @@
 
 #include <string>
 #include <iostream>
+using namespace std;
 
 // ════════════════════════════════════════════════════════════
 // [PSOOP CO1 - Task 1: Package entity class]
@@ -24,17 +25,17 @@ class Package {
 private:
     // [PSOOP CO1 - private: fully encapsulated package data]
     int         packageId;
-    std::string trackingCode;
+    string trackingCode;
     double      weightKg;
     double      lengthCm;
     double      widthCm;
     double      heightCm;
-    std::string status;       // PENDING LOADED IN_TRANSIT DELIVERED
+    string status;       // PENDING LOADED IN_TRANSIT DELIVERED
     int         srcRow;
     int         srcCol;
     int         dstRow;
     int         dstCol;
-    std::string recipientName;
+    string recipientName;
 
     static int idCounter;
 
@@ -44,8 +45,8 @@ public:
             double length, double width, double height,
             int    srcR, int srcC,
             int    dstR, int dstC,
-            const std::string& recipient = "Customer",
-            const std::string& tracking  = "");
+            const string& recipient = "Customer",
+            const string& tracking  = "");
 
     ~Package();
 
@@ -62,12 +63,12 @@ public:
 
     // Getters
     int         getId()           const;
-    std::string getTrackingCode() const;
+    string getTrackingCode() const;
     double      getWeightKg()     const;
-    std::string getStatus()       const;
+    string getStatus()       const;
     int         getDstRow()       const;
     int         getDstCol()       const;
-    std::string getRecipient()    const;
+    string getRecipient()    const;
 };
 
 #endif // PACKAGE_H

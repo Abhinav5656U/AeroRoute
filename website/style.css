@@ -143,6 +143,22 @@ input:focus, select:focus { border-color: var(--accent); }
 .btn.primary { background: var(--accent); }
 .btn.primary:hover { background: var(--accent-dark); }
 .btn.icon-action { width: 44px; height: 44px; display: inline-grid; place-items: center; padding: 0; background: #dcece9; color: var(--accent-dark); font-size: 1rem; }
+.mission-runner { margin-top: 1rem; padding: 0.85rem; border: 1px solid var(--line); border-radius: 6px; background: #f8faf9; }
+.subject-runner { margin-top: 0.8rem; padding: 0.85rem; border: 1px solid var(--line); border-radius: 6px; background: #f8faf9; }
+.subject-progress { margin-top: 0.75rem; }
+.subject-progress progress { display: block; width: 100%; height: 8px; accent-color: var(--accent); }
+.subject-runner .btn, .lab-panel .button-row > .btn { width: auto; margin-top: 0; }
+.instruction-fields { margin-top: 0.75rem; }
+.mission-runner-controls { align-items: end; }
+.mission-runner-controls .btn { width: auto; margin-top: 0; }
+.speed-control { display: grid; grid-template-columns: 1fr auto; gap: 0.25rem 0.75rem; align-items: center; min-width: 150px; margin-left: auto; color: #45514e; font-size: 0.78rem; font-weight: 600; }
+.speed-control output { color: var(--accent-dark); font-family: 'JetBrains Mono', monospace; }
+.speed-control input { grid-column: 1 / -1; width: 100%; padding: 0; accent-color: var(--accent); }
+.mission-progress { margin-top: 0.75rem; }
+.mission-progress-heading { display: flex; justify-content: space-between; gap: 0.75rem; margin-bottom: 0.4rem; color: #45514e; font-size: 0.75rem; }
+.mission-progress-heading strong { color: var(--accent-dark); }
+.mission-progress progress { display: block; width: 100%; height: 8px; accent-color: var(--accent); }
+.mission-runner-controls .btn:disabled { cursor: not-allowed; opacity: 0.55; transform: none; }
 .lab-result { display: block; min-height: 2.6rem; margin-top: 1rem; padding: 0.7rem 0.8rem; border-left: 3px solid var(--accent); background: #f1f7f5; color: #34524c; font-size: 0.82rem; overflow-wrap: anywhere; }
 .activity-panel { min-width: 0; border-radius: 8px; }
 .activity-heading { justify-content: space-between; }
@@ -186,6 +202,8 @@ input:focus, select:focus { border-color: var(--accent); }
   .lab-tab { flex-direction: column; gap: 0.1rem; min-height: 58px; font-size: 0.7rem; }
   .lab-tab span { font-size: 0.75rem; }
   .lab-panel { padding: 1rem; }
+  .mission-runner-controls .btn { flex: 1 1 100%; }
+  .speed-control { width: 100%; margin-left: 0; }
   .activity-panel { order: 2; }
   .log-window { min-height: 180px; max-height: 240px; }
   .register-table th, .register-table td { padding: 0.65rem 0.35rem; font-size: 0.7rem; }

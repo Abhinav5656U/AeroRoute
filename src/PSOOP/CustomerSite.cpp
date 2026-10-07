@@ -1,20 +1,21 @@
 /*
- * ============================================================
+ *
  * FILE        : CustomerSite.cpp
  * PROJECT     : AeroRoute — Autonomous Drone Delivery Simulator
  * SUBJECT     : PSOOP — Problem Solving Using OOP
  * COURSE CODE : 2310261L
  * TASK        : Task 1 CO1 | Task 2 CO2
- * ============================================================
+ *
  */
 
 #include "CustomerSite.h"
+using namespace std;
 
 // [PSOOP CO1 - Task 1: Base class init via initialiser list]
 CustomerSite::CustomerSite(int row, int col,
-                           const std::string& label,
-                           const std::string& custName,
-                           const std::string& addr,
+                           const string& label,
+                           const string& custName,
+                           const string& addr,
                            bool signature)
     : Location(row, col, label, CELL_CUSTOMER),
       customerName(custName),
@@ -23,31 +24,31 @@ CustomerSite::CustomerSite(int row, int col,
       completedDeliveries(0),
       requiresSignature(signature)
 {
-    std::cout << "[PSOOP] CustomerSite constructed: "
+    cout << "[PSOOP] CustomerSite constructed: "
               << label << "\n";
 }
 
 CustomerSite::~CustomerSite() {
-    std::cout << "[PSOOP] CustomerSite destructed: "
+    cout << "[PSOOP] CustomerSite destructed: "
               << getLabel() << "\n";
 }
 
 // [PSOOP CO2 - Task 2: Polymorphic display override]
 void CustomerSite::display() const {
-    std::cout << "\n  ┌─────────────────────────────┐\n";
-    std::cout << "  │  CUSTOMER SITE              │\n";
-    std::cout << "  └─────────────────────────────┘\n";
+    cout << "\n  ┌─────────────────────────────┐\n";
+    cout << "  │  CUSTOMER SITE              │\n";
+    cout << "  └─────────────────────────────┘\n";
     displayBase();
-    std::cout << "  Customer : " << customerName       << "\n";
-    std::cout << "  Address  : " << address            << "\n";
-    std::cout << "  Pending  : " << pendingDeliveries  << "\n";
-    std::cout << "  Delivered: " << completedDeliveries<< "\n";
-    std::cout << "  Signature: "
+    cout << "  Customer : " << customerName       << "\n";
+    cout << "  Address  : " << address            << "\n";
+    cout << "  Pending  : " << pendingDeliveries  << "\n";
+    cout << "  Delivered: " << completedDeliveries<< "\n";
+    cout << "  Signature: "
               << (requiresSignature ? "Required" : "Not Required")
               << "\n";
 }
 
-std::string CustomerSite::getTypeName()  const { return "CustomerSite"; }
+string CustomerSite::getTypeName()  const { return "CustomerSite"; }
 int         CustomerSite::getTypeCode()  const { return CELL_CUSTOMER; }
 
 // [PSOOP CO2 - Task 2: Cannot dock if signature required
@@ -60,7 +61,7 @@ void CustomerSite::receiveDelivery() {
     if (pendingDeliveries > 0) {
         pendingDeliveries--;
         completedDeliveries++;
-        std::cout << "[PSOOP] Delivery completed at "
+        cout << "[PSOOP] Delivery completed at "
                   << getLabel()
                   << " | Total completed: "
                   << completedDeliveries << "\n";
@@ -69,12 +70,12 @@ void CustomerSite::receiveDelivery() {
 
 void CustomerSite::addPendingDelivery() {
     pendingDeliveries++;
-    std::cout << "[PSOOP] Pending delivery added to "
+    cout << "[PSOOP] Pending delivery added to "
               << getLabel()
               << " | Pending: " << pendingDeliveries << "\n";
 }
 
-std::string CustomerSite::getCustomerName()
+string CustomerSite::getCustomerName()
     const { return customerName; }
 int CustomerSite::getPendingDeliveries()
     const { return pendingDeliveries; }

@@ -1,11 +1,11 @@
 /*
- * ============================================================
+ *
  * FILE        : DroneRegisters.cpp
  * PROJECT     : AeroRoute — Autonomous Drone Delivery Simulator
  * SUBJECT     : COA Lab | Course Code: 2310221L
  * TASK        : Task 1 — CPU Register Simulation
  * COURSE OUT  : CO1
- * ============================================================
+ *
  */
 
 #include "DroneRegisters.h"
@@ -13,15 +13,16 @@
 #include <iomanip>
 #include <cmath>
 #include <bitset>
+using namespace std;
 
 // ── FLAGS display ─────────────────────────────────────────────
 void FLAGS_Register::display() const {
-    std::cout << "  FLAGS: ";
-    std::cout << "ZF=" << ZF << " ";
-    std::cout << "CF=" << CF << " ";
-    std::cout << "SF=" << SF << " ";
-    std::cout << "OF=" << OF << " ";
-    std::cout << "PF=" << PF << "\n";
+    cout << "  FLAGS: ";
+    cout << "ZF=" << ZF << " ";
+    cout << "CF=" << CF << " ";
+    cout << "SF=" << SF << " ";
+    cout << "OF=" << OF << " ";
+    cout << "PF=" << PF << "\n";
 }
 
 // ════════════════════════════════════════════════════════════
@@ -37,9 +38,9 @@ DroneRegisters::DroneRegisters()
       SP(0x00007FFFFFFFFFFF),
       instructionCount(0) {
     FLAGS.clear();
-    std::cout << "[Registers] Power-on state initialised.\n";
-    std::cout << "[Registers] PC = 0x"
-              << std::hex << PC << std::dec << "\n";
+    cout << "[Registers] Power-on state initialised.\n";
+    cout << "[Registers] PC = 0x"
+              << hex << PC << dec << "\n";
 }
 
 // ── Private: update FLAGS after arithmetic result ─────────────
@@ -71,7 +72,7 @@ void DroneRegisters::MOV_RAX(long long value) {
     RAX = value;
     IR  = 0x48C7C0; // encoding for MOV RAX, imm64
     advancePC();
-    std::cout << "[REG] MOV RAX, " << value
+    cout << "[REG] MOV RAX, " << value
               << "  | RAX = " << RAX << "\n";
 }
 
@@ -79,7 +80,7 @@ void DroneRegisters::MOV_RBX(long long value) {
     RBX = value;
     IR  = 0x48C7C3; // MOV RBX, imm64
     advancePC();
-    std::cout << "[REG] MOV RBX, " << value
+    cout << "[REG] MOV RBX, " << value
               << "  | RBX = " << RBX << "\n";
 }
 
@@ -87,7 +88,7 @@ void DroneRegisters::MOV_RCX(long long value) {
     RCX = value;
     IR  = 0x48C7C1; // MOV RCX, imm64
     advancePC();
-    std::cout << "[REG] MOV RCX, " << value
+    cout << "[REG] MOV RCX, " << value
               << "  | RCX = " << RCX << "\n";
 }
 
@@ -95,20 +96,20 @@ void DroneRegisters::MOV_RDX(long long value) {
     RDX = value;
     IR  = 0x48C7C2; // MOV RDX, imm64
     advancePC();
-    std::cout << "[REG] MOV RDX, " << value
+    cout << "[REG] MOV RDX, " << value
               << "  | RDX = " << RDX << "\n";
 }
 
 // [COA CO1 - Task 1: Register to Register Transfer]
 void DroneRegisters::MOV_REG_TO_REG(
     long long& dest, long long src,
-    const std::string& destName,
-    const std::string& srcName)
+    const string& destName,
+    const string& srcName)
 {
     dest = src;
     IR   = 0x4889C0; // MOV reg, reg (generalised)
     advancePC();
-    std::cout << "[REG] MOV " << destName
+    cout << "[REG] MOV " << destName
               << ", " << srcName
               << "  | " << destName << " = " << dest << "\n";
 }
@@ -120,7 +121,7 @@ void DroneRegisters::MOV_REG_TO_REG(
 // Returns new value (caller must store it back)
 // ════════════════════════════════════════════════════════════
 long long DroneRegisters::ADD(long long dest, long long src,
-                               const std::string& destName) {
+                               const string& destName) {
     long long result = dest + src;
 
     // Carry flag: unsigned overflow (result < either operand)
@@ -135,7 +136,7 @@ long long DroneRegisters::ADD(long long dest, long long src,
     IR = 0x4801C0; // ADD reg, reg
     advancePC();
 
-    std::cout << "[REG] ADD " << destName
+    cout << "[REG] ADD " << destName
               << ", " << src
               << "  | " << destName << " = "
               << dest << " + " << src << " = " << result << "\n";
@@ -149,7 +150,7 @@ long long DroneRegisters::ADD(long long dest, long long src,
 // dest = dest - src
 // ════════════════════════════════════════════════════════════
 long long DroneRegisters::SUB(long long dest, long long src,
-                               const std::string& destName) {
+                               const string& destName) {
     long long result = dest - src;
 
     // Carry flag: borrow occurred (dest < src in unsigned)
@@ -164,7 +165,7 @@ long long DroneRegisters::SUB(long long dest, long long src,
     IR = 0x4829C0; // SUB reg, reg
     advancePC();
 
-    std::cout << "[REG] SUB " << destName
+    cout << "[REG] SUB " << destName
               << ", " << src
               << "  | " << destName << " = "
               << dest << " - " << src << " = " << result << "\n";
@@ -179,8 +180,8 @@ long long DroneRegisters::SUB(long long dest, long long src,
 // Only FLAGS are affected.
 // ════════════════════════════════════════════════════════════
 void DroneRegisters::CMP(long long op1, long long op2,
-                          const std::string& op1Name,
-                          const std::string& op2Name) {
+                          const string& op1Name,
+                          const string& op2Name) {
     long long result = op1 - op2;
 
     FLAGS.CF = ((unsigned long long)op1 <
@@ -192,14 +193,14 @@ void DroneRegisters::CMP(long long op1, long long op2,
     IR = 0x483BC0; // CMP reg, reg
     advancePC();
 
-    std::cout << "[REG] CMP " << op1Name
+    cout << "[REG] CMP " << op1Name
               << ", " << op2Name
               << "  | " << op1 << " vs " << op2;
 
-    if (FLAGS.ZF) std::cout << "  -> EQUAL";
-    else if (FLAGS.CF) std::cout << "  -> LESS THAN";
-    else std::cout << "  -> GREATER THAN";
-    std::cout << "\n";
+    if (FLAGS.ZF) cout << "  -> EQUAL";
+    else if (FLAGS.CF) cout << "  -> LESS THAN";
+    else cout << "  -> GREATER THAN";
+    cout << "\n";
     FLAGS.display();
 }
 
@@ -222,7 +223,7 @@ void DroneRegisters::loadTelemetry(
     double headingDeg,
     double batteryPct)
 {
-    std::cout << "\n[Registers] Loading telemetry into registers:\n";
+    cout << "\n[Registers] Loading telemetry into registers:\n";
 
     // RAX = altitude in metres (direct integer)
     MOV_RAX((long long)altitudeM);
@@ -236,7 +237,7 @@ void DroneRegisters::loadTelemetry(
     // RDX = battery percentage * 100
     MOV_RDX((long long)(batteryPct * 100));
 
-    std::cout << "[Registers] Telemetry loaded.\n\n";
+    cout << "[Registers] Telemetry loaded.\n\n";
 }
 
 // ── Accessors ─────────────────────────────────────────────────
@@ -259,41 +260,41 @@ double DroneRegisters::getBatteryPct() const { return RDX / 100.0; }
 // [COA CO1 - Task 1: Register State Display]
 // ════════════════════════════════════════════════════════════
 void DroneRegisters::displayRegisters() const {
-    std::cout << "\n";
-    std::cout << "  ============================================\n";
-    std::cout << "   x86-64 Register State — AeroRoute Drone\n";
-    std::cout << "  ============================================\n";
+    cout << "\n";
+    cout << "  ============================================\n";
+    cout << "   x86-64 Register State — AeroRoute Drone\n";
+    cout << "  ============================================\n";
 
-    std::cout << std::hex << std::uppercase;
+    cout << hex << uppercase;
 
-    auto showReg = [](const std::string& name, long long val,
-                      const std::string& meaning) {
-        std::cout << "  " << std::left << std::setw(6) << name
-                  << "0x" << std::setfill('0')
-                  << std::setw(16) << (unsigned long long)val
-                  << std::setfill(' ')
-                  << "  (" << std::dec << val << ")"
+    auto showReg = [](const string& name, long long val,
+                      const string& meaning) {
+        cout << "  " << left << setw(6) << name
+                  << "0x" << setfill('0')
+                  << setw(16) << (unsigned long long)val
+                  << setfill(' ')
+                  << "  (" << dec << val << ")"
                   << "  [" << meaning << "]\n"
-                  << std::hex;
+                  << hex;
     };
 
-    showReg("RAX", RAX, "Altitude " + std::to_string((int)RAX) + " m");
-    showReg("RBX", RBX, "Speed " + std::to_string(RBX/100) + "." +
-            std::to_string(RBX%100) + " m/s");
-    showReg("RCX", RCX, "Heading " + std::to_string((int)(RCX/100)) + " deg");
-    showReg("RDX", RDX, "Battery " + std::to_string((int)(RDX/100)) + "%");
+    showReg("RAX", RAX, "Altitude " + to_string((int)RAX) + " m");
+    showReg("RBX", RBX, "Speed " + to_string(RBX/100) + "." +
+            to_string(RBX%100) + " m/s");
+    showReg("RCX", RCX, "Heading " + to_string((int)(RCX/100)) + " deg");
+    showReg("RDX", RDX, "Battery " + to_string((int)(RDX/100)) + "%");
     showReg("PC",  PC,  "Program Counter");
     showReg("IR",  IR,  "Instruction Register");
     showReg("SP",  SP,  "Stack Pointer");
 
-    std::cout << std::dec;
+    cout << dec;
     FLAGS.display();
-    std::cout << "  ============================================\n\n";
+    cout << "  ============================================\n\n";
 }
 
 void DroneRegisters::displayRegisterState(
-    const std::string& context) const {
-    std::cout << "\n  --- Register state after: "
+    const string& context) const {
+    cout << "\n  --- Register state after: "
               << context << " ---\n";
     displayRegisters();
 }
@@ -303,7 +304,7 @@ void DroneRegisters::displayRegisterState(
 // Writes register state to website/data/registers.json
 // ════════════════════════════════════════════════════════════
 void DroneRegisters::exportToJson(
-    const std::vector<InstructionData>& instructions,
+    const vector<InstructionData>& instructions,
     const DisplacementData& disp) const
 {
     FLAGS_Register f = FLAGS;
@@ -312,5 +313,5 @@ void DroneRegisters::exportToJson(
         f.ZF, f.CF, f.SF, f.OF, f.PF,
         instructions, disp
     );
-    std::cout << "[Registers] Exported to registers.json\n";
+    cout << "[Registers] Exported to registers.json\n";
 }

@@ -5,12 +5,12 @@
  * DESCRIPTION : Shared constants used across all subjects.
  *               Cell type codes here MUST match the values
  *               JavaScript reads from grid.json.
- * AUTHOR      : [Your Name] | MIT Academy of Engineering
  * ============================================================
  */
 
 #ifndef CONSTANTS_H
 #define CONSTANTS_H
+using namespace std;
 
 // ── Grid dimensions ──────────────────────────────────────────
 #define GRID_ROWS 10

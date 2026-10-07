@@ -1,5 +1,5 @@
 /*
- * ============================================================
+ *
  * FILE        : Subject4_Main.cpp
  * PROJECT     : AeroRoute — Autonomous Drone Delivery Simulator
  * SUBJECT     : PSOOP — Problem Solving Using OOP
@@ -13,7 +13,7 @@
  *   cd src/PSOOP
  *   g++ Subject4_Main.cpp Location.cpp Warehouse.cpp CustomerSite.cpp ChargingPad.cpp Package.cpp Drone.cpp -o ..\..\build\PSOOP.exe -std=c++17
  *   ..\..\build\PSOOP.exe
- * ============================================================
+ *
  */
 
 #include <iostream>
@@ -21,6 +21,7 @@
 #include <memory>
 #include <string>
 #include <limits>
+#include <stdexcept>
 #include "Location.h"
 #include "Warehouse.h"
 #include "CustomerSite.h"
@@ -28,47 +29,50 @@
 #include "Package.h"
 #include "Drone.h"
 #include "../shared/JsonWriter.h"
+using namespace std;
 
 // ── Forward declarations ──────────────────────────────────────
 void showMenu();
 void runTask1Demo();
 void runTask2Demo();
+void runTask3Demo();
 void runFullMissionDemo();
 void runInteractiveMode();
 void exportEntitiesToJson(
-    const std::vector<Location*>& locations,
-    const std::vector<Drone*>&    drones,
-    const std::vector<Package*>&  packages);
+    const vector<Location*>& locations,
+    const vector<Drone*>&    drones,
+    const vector<Package*>&  packages);
 void clearInput();
 
 // ── Main ──────────────────────────────────────────────────────
 int main() {
 
-    std::cout << "\n";
-    std::cout << "  ================================================\n";
-    std::cout << "   AeroRoute — PSOOP: Problem Solving Using OOP\n";
-    std::cout << "   Course Code: 2310261L\n";
-    std::cout << "   CO1: Class Hierarchy & Encapsulation\n";
-    std::cout << "   CO2: Inheritance & Polymorphism\n";
-    std::cout << "   MIT Academy of Engineering | Sem III 2026-27\n";
-    std::cout << "  ================================================\n\n";
+    cout << "\n";
+    cout << "  ================================================\n";
+    cout << "   AeroRoute — PSOOP: Problem Solving Using OOP\n";
+    cout << "   Course Code: 2310261L\n";
+    cout << "   CO1: Class Hierarchy & Encapsulation\n";
+    cout << "   CO2: Inheritance & Polymorphism\n";
+    cout << "   MIT Academy of Engineering | Sem III 2026-27\n";
+    cout << "  ================================================\n\n";
 
     int choice = 0;
     do {
         showMenu();
-        std::cin >> choice;
+        cin >> choice;
         clearInput();
 
         switch(choice) {
             case 1: runTask1Demo();       break;
             case 2: runTask2Demo();       break;
-            case 3: runFullMissionDemo(); break;
-            case 4: runInteractiveMode(); break;
+            case 3: runTask3Demo();       break;
+            case 4: runFullMissionDemo(); break;
+            case 5: runInteractiveMode(); break;
             case 0:
-                std::cout << "\n  Exiting PSOOP.\n\n";
+                cout << "\n  Exiting PSOOP.\n\n";
                 break;
             default:
-                std::cout << "\n  Invalid choice.\n\n";
+                cout << "\n  Invalid choice.\n\n";
         }
     } while(choice != 0);
 
@@ -76,27 +80,66 @@ int main() {
 }
 
 void showMenu() {
-    std::cout << "  ------------------------------------------------\n";
-    std::cout << "   PSOOP — MAIN MENU\n";
-    std::cout << "  ------------------------------------------------\n";
-    std::cout << "   [1] Task 1 — Class Hierarchy (CO1)\n";
-    std::cout << "       Location Warehouse CustomerSite\n";
-    std::cout << "       ChargingPad Package — all displayed\n";
-    std::cout << "   [2] Task 2 — Polymorphism Demo (CO2)\n";
-    std::cout << "       Drone base + DeliveryDrone ScoutDrone\n";
-    std::cout << "       HeavyDrone — virtual dispatch shown\n";
-    std::cout << "   [3] Full Mission Demo (CO1 + CO2)\n";
-    std::cout << "       Complete delivery mission simulation\n";
-    std::cout << "   [4] Interactive Mode\n";
-    std::cout << "   [0] Exit\n";
-    std::cout << "  ------------------------------------------------\n";
-    std::cout << "   Choice: ";
+    cout << "  ------------------------------------------------\n";
+    cout << "   PSOOP — MAIN MENU\n";
+    cout << "  ------------------------------------------------\n";
+    cout << "   [1] Task 1 — Class Hierarchy (CO1)\n";
+    cout << "       Location Warehouse CustomerSite\n";
+    cout << "       ChargingPad Package — all displayed\n";
+    cout << "   [2] Task 2 — Polymorphism Demo (CO2)\n";
+    cout << "       Drone base + DeliveryDrone ScoutDrone\n";
+    cout << "       HeavyDrone — virtual dispatch shown\n";
+    cout << "   [3] Task 3 — Critical Thinking and Exceptions (CO3)\n";
+    cout << "   [4] Full Mission Demo (CO1 + CO2)\n";
+    cout << "       Complete delivery mission simulation\n";
+    cout << "   [5] Interactive Mode\n";
+    cout << "   [0] Exit\n";
+    cout << "  ------------------------------------------------\n";
+    cout << "   Choice: ";
+}
+
+// [PSOOP CO3 - Task 3: reject invalid package data and handle conflicts]
+void runTask3Demo() {
+    cout << "\n  --- TASK 3: Critical Thinking and Exception Handling ---\n\n";
+
+    try {
+        Package invalidPackage(0.0, 10.0, 10.0, 10.0,
+                              0, 0, 2, 2, "Test Recipient");
+        (void)invalidPackage;
+        cout << "  ERROR: invalid package data was accepted.\n";
+    } catch (const invalid_argument& error) {
+        cout << "  Invalid package rejected safely: "
+             << error.what() << "\n";
+    }
+
+    Package validPackage(2.0, 10.0, 10.0, 10.0,
+                         0, 0, 2, 2, "Test Recipient");
+    Package secondPackage(1.0, 10.0, 10.0, 10.0,
+                          0, 0, 3, 3, "Another Recipient");
+    DeliveryDrone drone("AR-D1-T3", 0, 0);
+    if (!drone.loadPackage(&validPackage)) {
+        throw runtime_error("Could not load the valid recovery package.");
+    }
+
+    cout << "  Trying to load a second package while the drone is occupied:\n";
+    if (!drone.loadPackage(&secondPackage)) {
+        cout << "  Conflict handled: the existing payload was preserved.\n";
+    }
+
+    try {
+        drone.loadPackage(nullptr);
+    } catch (const invalid_argument& error) {
+        cout << "  Null package rejected safely: " << error.what() << "\n";
+    }
+
+    drone.unloadPackage();
+    cout << "\n  Task 3 exception and payload-conflict checks complete.\n\n";
 }
 
 void clearInput() {
-    std::cin.clear();
-    std::cin.ignore(
-        std::numeric_limits<std::streamsize>::max(), '\n');
+    cin.clear();
+    cin.ignore(
+        numeric_limits<streamsize>::max(), '\n');
 }
 
 // ════════════════════════════════════════════════════════════
@@ -104,9 +147,9 @@ void clearInput() {
 // [PSOOP CO1 - Task 1: Demonstrates all entity classes]
 // ════════════════════════════════════════════════════════════
 void runTask1Demo() {
-    std::cout << "\n  --- TASK 1: OOP Class Hierarchy Demo ---\n\n";
+    cout << "\n  --- TASK 1: OOP Class Hierarchy Demo ---\n\n";
 
-    std::cout << "  Creating Location subclass objects:\n\n";
+    cout << "  Creating Location subclass objects:\n\n";
 
     // [PSOOP CO1 - Warehouse object]
     Warehouse wh1(0, 0, "WH-Main", 200, "Ramesh Kumar", true);
@@ -122,7 +165,7 @@ void runTask1Demo() {
     // [PSOOP CO1 - ChargingPad object]
     ChargingPad cp1(4, 4, "CP-Central", 20.0f, 2);
     cp1.display();
-    std::cout << "  Charge time estimate (30% battery): "
+    cout << "  Charge time estimate (30% battery): "
               << cp1.estimateChargeTime(30.0f)
               << " minutes\n";
 
@@ -132,12 +175,12 @@ void runTask1Demo() {
     pkg1.display();
 
     // Export to JSON
-    std::vector<Location*> locs = {&wh1, &cs1, &cp1};
-    std::vector<Drone*>    drones;
-    std::vector<Package*>  pkgs  = {&pkg1};
+    vector<Location*> locs = {&wh1, &cs1, &cp1};
+    vector<Drone*>    drones;
+    vector<Package*>  pkgs  = {&pkg1};
     exportEntitiesToJson(locs, drones, pkgs);
 
-    std::cout << "\n  Task 1 demo complete.\n\n";
+    cout << "\n  Task 1 demo complete.\n\n";
 }
 
 // ════════════════════════════════════════════════════════════
@@ -151,40 +194,40 @@ void runTask1Demo() {
 // This is RUNTIME POLYMORPHISM via virtual dispatch table.
 // ════════════════════════════════════════════════════════════
 void runTask2Demo() {
-    std::cout << "\n  --- TASK 2: Polymorphism Demo ---\n\n";
+    cout << "\n  --- TASK 2: Polymorphism Demo ---\n\n";
 
-    std::cout << "  [PSOOP CO2] Creating drones as base class"
+    cout << "  [PSOOP CO2] Creating drones as base class"
               << " pointers (Drone*):\n\n";
 
     // All stored as base class pointer — key OOP concept
-    std::vector<Drone*> fleet;
+    vector<Drone*> fleet;
 
     fleet.push_back(new DeliveryDrone("AR-D1-001", 0, 0));
     fleet.push_back(new ScoutDrone   ("AR-S1-001", 0, 0));
     fleet.push_back(new HeavyDrone   ("AR-H1-001", 0, 0, 8));
 
-    std::cout << "\n  [PSOOP CO2] Calling display() on each drone\n";
-    std::cout << "  SAME function call -> DIFFERENT behaviour\n";
-    std::cout << "  This is runtime polymorphism:\n\n";
+    cout << "\n  [PSOOP CO2] Calling display() on each drone\n";
+    cout << "  SAME function call -> DIFFERENT behaviour\n";
+    cout << "  This is runtime polymorphism:\n\n";
 
     // Same call, different result — polymorphism
     for (Drone* d : fleet) {
         d->display();
-        std::cout << "\n";
+        cout << "\n";
     }
 
-    std::cout << "  [PSOOP CO2] Calling fly() on each drone\n";
-    std::cout << "  SAME call -> different flight behaviour:\n\n";
+    cout << "  [PSOOP CO2] Calling fly() on each drone\n";
+    cout << "  SAME call -> different flight behaviour:\n\n";
 
     // Same fly() call — each drone behaves differently
     for (Drone* d : fleet) {
-        std::cout << "  Calling: drone->fly(5, 5)  ["
+        cout << "  Calling: drone->fly(5, 5)  ["
                   << d->getModelName() << "]\n";
         d->fly(5, 5);
     }
 
     // Check payload capacity polymorphically
-    std::cout << "\n  [PSOOP CO2] Payload capacity check"
+    cout << "\n  [PSOOP CO2] Payload capacity check"
               << " (polymorphic getMaxPayloadKg()):\n";
     Package heavyPkg(30.0, 50.0, 40.0, 30.0,
                      0, 0, 9, 9, "Factory");
@@ -192,7 +235,7 @@ void runTask2Demo() {
     for (Drone* d : fleet) {
         bool fits = heavyPkg.isWithinDroneLimit(
                         d->getMaxPayloadKg());
-        std::cout << "  " << d->getModelName()
+        cout << "  " << d->getModelName()
                   << " (max " << d->getMaxPayloadKg() << "kg)"
                   << ": 30kg package "
                   << (fits ? "FITS" : "TOO HEAVY") << "\n";
@@ -201,7 +244,7 @@ void runTask2Demo() {
     // Free memory
     for (Drone* d : fleet) delete d;
 
-    std::cout << "\n  Task 2 demo complete.\n\n";
+    cout << "\n  Task 2 demo complete.\n\n";
 }
 
 // ════════════════════════════════════════════════════════════
@@ -209,11 +252,10 @@ void runTask2Demo() {
 // [PSOOP - Runs a complete delivery scenario]
 // ════════════════════════════════════════════════════════════
 void runFullMissionDemo() {
-    std::cout << "\n  --- Full Mission Demo ---\n\n";
+    cout << "\n  --- Full Mission Demo ---\n\n";
 
     // ── Create locations ──────────────────────────────────────
-    Warehouse    wh("WH-Main",  0, 0, "WH-Main", 100,
-                    "Manager", true);
+    Warehouse    wh(0, 0, "WH-Main", 100, "Manager", true);
     CustomerSite cs(9, 9, "CS-Alpha", "Amit Patel",
                     "Sector 12");
     ChargingPad  cp(4, 4, "CP-Mid", 25.0f);
@@ -226,135 +268,139 @@ void runFullMissionDemo() {
     Package       pkg(3.5, 25.0, 15.0, 10.0,
                       0, 0, 9, 9, "Amit Patel");
 
-    std::cout << "\n  === MISSION START ===\n\n";
+    cout << "\n  === MISSION START ===\n\n";
 
     // Step 1: Load package
-    std::cout << "  Step 1: Load package onto drone\n";
+    cout << "  Step 1: Load package onto drone\n";
     drone.loadPackage(&pkg);
 
     // Step 2: Fly to charging pad (mid-route)
-    std::cout << "\n  Step 2: Fly to charging pad\n";
+    cout << "\n  Step 2: Fly to charging pad\n";
     drone.fly(cp.getRow(), cp.getCol());
     cp.startCharging();
     drone.chargeBattery(20.0f);
     cp.finishCharging();
 
     // Step 3: Fly to destination
-    std::cout << "\n  Step 3: Fly to customer site\n";
+    cout << "\n  Step 3: Fly to customer site\n";
     drone.fly(cs.getRow(), cs.getCol());
 
     // Step 4: Deliver package
-    std::cout << "\n  Step 4: Deliver package\n";
+    cout << "\n  Step 4: Deliver package\n";
     drone.unloadPackage();
     cs.receiveDelivery();
 
     // Step 5: Display final state
-    std::cout << "\n  === MISSION COMPLETE ===\n";
+    cout << "\n  === MISSION COMPLETE ===\n";
     drone.display();
     cs.display();
     pkg.display();
     drone.displayFlightLog();
 
     // Export to JSON
-    std::vector<Location*> locs = {&wh,   &cs,  &cp};
-    std::vector<Drone*>    drns = {&drone};
-    std::vector<Package*>  pkgs = {&pkg};
+    vector<Location*> locs = {&wh,   &cs,  &cp};
+    vector<Drone*>    drns = {&drone};
+    vector<Package*>  pkgs = {&pkg};
     exportEntitiesToJson(locs, drns, pkgs);
 
-    std::cout << "\n  Full mission demo complete.\n\n";
+    cout << "\n  Full mission demo complete.\n\n";
 }
 
 // ════════════════════════════════════════════════════════════
 // INTERACTIVE MODE
 // ════════════════════════════════════════════════════════════
 void runInteractiveMode() {
-    std::cout << "\n  --- Interactive Mode ---\n\n";
+    cout << "\n  --- Interactive Mode ---\n\n";
 
-    std::vector<Location*> locations;
-    std::vector<Drone*>    drones;
-    std::vector<Package*>  packages;
+    vector<Location*> locations;
+    vector<Drone*>    drones;
+    vector<Package*>  packages;
 
     int subChoice = 0;
     do {
-        std::cout << "  [1] Add Warehouse\n";
-        std::cout << "  [2] Add Customer Site\n";
-        std::cout << "  [3] Add Charging Pad\n";
-        std::cout << "  [4] Add Package\n";
-        std::cout << "  [5] Add Drone\n";
-        std::cout << "  [6] Display all entities\n";
-        std::cout << "  [7] Fly drone to location\n";
-        std::cout << "  [8] Export to JSON\n";
-        std::cout << "  [0] Back\n";
-        std::cout << "  Choice: ";
-        std::cin >> subChoice;
+        cout << "  [1] Add Warehouse\n";
+        cout << "  [2] Add Customer Site\n";
+        cout << "  [3] Add Charging Pad\n";
+        cout << "  [4] Add Package\n";
+        cout << "  [5] Add Drone\n";
+        cout << "  [6] Display all entities\n";
+        cout << "  [7] Fly drone to location\n";
+        cout << "  [8] Export to JSON\n";
+        cout << "  [0] Back\n";
+        cout << "  Choice: ";
+        cin >> subChoice;
         clearInput();
 
         if (subChoice == 1) {
             int r, c, cap;
-            std::string lbl, mgr;
-            std::cout << "  Row: "; std::cin >> r;
-            std::cout << "  Col: "; std::cin >> c;
-            std::cout << "  Capacity: "; std::cin >> cap;
+            string lbl, mgr;
+            cout << "  Row: "; cin >> r;
+            cout << "  Col: "; cin >> c;
+            cout << "  Capacity: "; cin >> cap;
             clearInput();
-            std::cout << "  Label: ";
-            std::getline(std::cin, lbl);
-            std::cout << "  Manager: ";
-            std::getline(std::cin, mgr);
+            cout << "  Label: ";
+            getline(cin, lbl);
+            cout << "  Manager: ";
+            getline(cin, mgr);
             locations.push_back(
                 new Warehouse(r, c, lbl, cap, mgr));
         }
         else if (subChoice == 2) {
             int r, c;
-            std::string lbl, name;
-            std::cout << "  Row: "; std::cin >> r;
-            std::cout << "  Col: "; std::cin >> c;
+            string lbl, name;
+            cout << "  Row: "; cin >> r;
+            cout << "  Col: "; cin >> c;
             clearInput();
-            std::cout << "  Label: ";
-            std::getline(std::cin, lbl);
-            std::cout << "  Customer name: ";
-            std::getline(std::cin, name);
+            cout << "  Label: ";
+            getline(cin, lbl);
+            cout << "  Customer name: ";
+            getline(cin, name);
             locations.push_back(
                 new CustomerSite(r, c, lbl, name));
         }
         else if (subChoice == 3) {
             int r, c;
-            std::string lbl;
+            string lbl;
             float rate;
-            std::cout << "  Row: "; std::cin >> r;
-            std::cout << "  Col: "; std::cin >> c;
-            std::cout << "  Charge rate (%/min): ";
-            std::cin >> rate;
+            cout << "  Row: "; cin >> r;
+            cout << "  Col: "; cin >> c;
+            cout << "  Charge rate (%/min): ";
+            cin >> rate;
             clearInput();
-            std::cout << "  Label: ";
-            std::getline(std::cin, lbl);
+            cout << "  Label: ";
+            getline(cin, lbl);
             locations.push_back(
                 new ChargingPad(r, c, lbl, rate));
         }
         else if (subChoice == 4) {
             double wt;
             int sr, sc, dr, dc;
-            std::string recip;
-            std::cout << "  Weight (kg): "; std::cin >> wt;
-            std::cout << "  From row: ";    std::cin >> sr;
-            std::cout << "  From col: ";    std::cin >> sc;
-            std::cout << "  To row: ";      std::cin >> dr;
-            std::cout << "  To col: ";      std::cin >> dc;
+            string recip;
+            cout << "  Weight (kg): "; cin >> wt;
+            cout << "  From row: ";    cin >> sr;
+            cout << "  From col: ";    cin >> sc;
+            cout << "  To row: ";      cin >> dr;
+            cout << "  To col: ";      cin >> dc;
             clearInput();
-            std::cout << "  Recipient: ";
-            std::getline(std::cin, recip);
-            packages.push_back(
-                new Package(wt,10,10,10,sr,sc,dr,dc,recip));
+            cout << "  Recipient: ";
+            getline(cin, recip);
+            try {
+                packages.push_back(
+                    new Package(wt,10,10,10,sr,sc,dr,dc,recip));
+            } catch (const exception& error) {
+                cout << "  Package rejected: " << error.what() << "\n";
+            }
         }
         else if (subChoice == 5) {
             int type, r, c;
-            std::string serial;
-            std::cout << "  Type (1=Delivery 2=Scout 3=Heavy): ";
-            std::cin >> type;
-            std::cout << "  Start row: "; std::cin >> r;
-            std::cout << "  Start col: "; std::cin >> c;
+            string serial;
+            cout << "  Type (1=Delivery 2=Scout 3=Heavy): ";
+            cin >> type;
+            cout << "  Start row: "; cin >> r;
+            cout << "  Start col: "; cin >> c;
             clearInput();
-            std::cout << "  Serial number: ";
-            std::getline(std::cin, serial);
+            cout << "  Serial number: ";
+            getline(cin, serial);
             if      (type == 1)
                 drones.push_back(new DeliveryDrone(serial,r,c));
             else if (type == 2)
@@ -363,20 +409,20 @@ void runInteractiveMode() {
                 drones.push_back(new HeavyDrone(serial,r,c));
         }
         else if (subChoice == 6) {
-            std::cout << "\n  Locations:\n";
+            cout << "\n  Locations:\n";
             for (auto* l : locations) l->display();
-            std::cout << "\n  Drones:\n";
+            cout << "\n  Drones:\n";
             for (auto* d : drones) d->display();
-            std::cout << "\n  Packages:\n";
+            cout << "\n  Packages:\n";
             for (auto* p : packages) p->display();
         }
         else if (subChoice == 7) {
             if (drones.empty()) {
-                std::cout << "  No drones added yet.\n";
+                cout << "  No drones added yet.\n";
             } else {
                 int tr, tc;
-                std::cout << "  Target row: "; std::cin >> tr;
-                std::cout << "  Target col: "; std::cin >> tc;
+                cout << "  Target row: "; cin >> tr;
+                cout << "  Target col: "; cin >> tc;
                 drones[0]->fly(tr, tc);
                 exportEntitiesToJson(locations, drones, packages);
             }
@@ -398,15 +444,15 @@ void runInteractiveMode() {
 // Website reads this and shows them in the entities panel
 // ════════════════════════════════════════════════════════════
 void exportEntitiesToJson(
-    const std::vector<Location*>& locations,
-    const std::vector<Drone*>&    drones,
-    const std::vector<Package*>&  packages)
+    const vector<Location*>& locations,
+    const vector<Drone*>&    drones,
+    const vector<Package*>&  packages)
 {
-    std::vector<EntityData> entities;
+    vector<EntityData> entities;
 
     // Add location entities
     for (const auto* loc : locations) {
-        std::string typeStr;
+        string typeStr;
         switch(loc->getTypeCode()) {
             case CELL_WAREHOUSE: typeStr = "warehouse"; break;
             case CELL_CUSTOMER:  typeStr = "customer";  break;
@@ -446,7 +492,7 @@ void exportEntitiesToJson(
 
     GraphicsData gd = {0, 0, 0, 1.0, 0};
     writeMissionJson(entities, gd);
-    std::cout << "\n[PSOOP] Exported "
+    cout << "\n[PSOOP] Exported "
               << entities.size()
               << " entities to mission.json\n";
 }

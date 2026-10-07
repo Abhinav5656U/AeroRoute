@@ -1,5 +1,5 @@
 /*
- * ============================================================
+ *
  * FILE        : Warehouse.h
  * PROJECT     : AeroRoute — Autonomous Drone Delivery Simulator
  * SUBJECT     : PSOOP — Problem Solving Using OOP
@@ -8,7 +8,7 @@
  * COURSE OUT  : CO1 — Derived class with encapsulated data
  *               CO2 — Inherits from Location, overrides
  *                     virtual methods (polymorphism)
- * ============================================================
+ *
  */
 
 #ifndef WAREHOUSE_H
@@ -16,6 +16,7 @@
 
 #include "Location.h"
 #include <vector>
+using namespace std;
 
 // ════════════════════════════════════════════════════════════
 // [PSOOP CO1 CO2 - Task 1 Task 2: Warehouse class]
@@ -28,15 +29,15 @@ private:
     // [PSOOP CO1 - private data specific to Warehouse]
     int         capacity;        // max packages storable
     int         currentStock;    // packages currently in stock
-    std::string managerName;     // warehouse manager
+    string managerName;     // warehouse manager
     bool        isMainHub;       // is this the primary hub?
 
 public:
     // ── Constructor ──────────────────────────────────────────
     Warehouse(int row, int col,
-              const std::string& label,
+              const string& label,
               int capacity       = 100,
-              const std::string& manager = "Unassigned",
+              const string& manager = "Unassigned",
               bool mainHub       = false);
 
     // ── Destructor ───────────────────────────────────────────
@@ -48,7 +49,7 @@ public:
     // virtual keyword in base, override keyword here.
     // ════════════════════════════════════════════════════════
     void        display()      const override;
-    std::string getTypeName()  const override;
+    string getTypeName()  const override;
     int         getTypeCode()  const override;
     bool        canDroneDock() const override;
 
@@ -59,7 +60,7 @@ public:
     // ── Getters ──────────────────────────────────────────────
     int         getCapacity()    const;
     int         getCurrentStock()const;
-    std::string getManagerName() const;
+    string getManagerName() const;
     bool        getIsMainHub()   const;
     float       getStockPercent()const;
 };

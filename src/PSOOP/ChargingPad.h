@@ -1,17 +1,18 @@
 /*
- * ============================================================
+ *
  * FILE        : ChargingPad.h
  * PROJECT     : AeroRoute — Autonomous Drone Delivery Simulator
  * SUBJECT     : PSOOP — Problem Solving Using OOP
  * COURSE CODE : 2310261L
  * TASK        : Task 1 CO1 | Task 2 CO2
- * ============================================================
+ *
  */
 
 #ifndef CHARGING_PAD_H
 #define CHARGING_PAD_H
 
 #include "Location.h"
+using namespace std;
 
 // ════════════════════════════════════════════════════════════
 // [PSOOP CO1 CO2 - ChargingPad]
@@ -27,7 +28,7 @@ private:
 
 public:
     ChargingPad(int row, int col,
-                const std::string& label,
+                const string& label,
                 float chargeRate = 15.0f,
                 int   slots      = 2);
 
@@ -35,7 +36,7 @@ public:
 
     // [PSOOP CO2 - Task 2: Mandatory overrides]
     void        display()      const override;
-    std::string getTypeName()  const override;
+    string getTypeName()  const override;
     int         getTypeCode()  const override;
     bool        canDroneDock() const override;
 

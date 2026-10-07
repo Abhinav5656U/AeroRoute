@@ -1,5 +1,5 @@
 /*
- * ============================================================
+ *
  * FILE        : Location.h
  * PROJECT     : AeroRoute — Autonomous Drone Delivery Simulator
  * SUBJECT     : PSOOP — Problem Solving Using OOP
@@ -12,9 +12,8 @@
  *               in the AeroRoute city grid.
  *               Warehouse, CustomerSite, ChargingPad all
  *               inherit from this class.
- * AUTHOR      : [Your Name] | MIT Academy of Engineering
  * DATE        : 2026-2027
- * ============================================================
+ *
  */
 
 #ifndef LOCATION_H
@@ -24,6 +23,7 @@
 #include <iostream>
 #include <iomanip>
 #include "../shared/Constants.h"
+using namespace std;
 
 // ════════════════════════════════════════════════════════════
 // [PSOOP CO1 - Task 1: Abstract Base Class — Location]
@@ -50,7 +50,7 @@ protected:
     // [PSOOP CO1 - protected: subclasses can read/write these]
     int         row;        // grid row position
     int         col;        // grid column position
-    std::string label;      // user-defined name e.g. "WH-Main"
+    string label;      // user-defined name e.g. "WH-Main"
     bool        isActive;   // whether this location is in use
     int         cellTypeCode; // matches Constants.h cell codes
 
@@ -58,7 +58,7 @@ public:
     // ── Constructor ──────────────────────────────────────────
     // [PSOOP CO1 - Task 1: Constructor with encapsulated init]
     Location(int r, int c,
-             const std::string& lbl,
+             const string& lbl,
              int typeCode);
 
     // ── Virtual Destructor ───────────────────────────────────
@@ -76,7 +76,7 @@ public:
     virtual void display() const = 0;
 
     // Return the type name as a string
-    virtual std::string getTypeName() const = 0;
+    virtual string getTypeName() const = 0;
 
     // Return the cell type code (matches grid constants)
     virtual int getTypeCode() const = 0;
@@ -89,18 +89,18 @@ public:
     int         getId()       const;
     int         getRow()      const;
     int         getCol()      const;
-    std::string getLabel()    const;
+    string getLabel()    const;
     bool        getIsActive() const;
 
     // [PSOOP CO1 - Task 1: Encapsulated setters with validation]
-    void setLabel(const std::string& newLabel);
+    void setLabel(const string& newLabel);
     void setActive(bool active);
 
     // Common display helper used by all subclasses
     void displayBase() const;
 
     // Operator overload for printing
-    friend std::ostream& operator<<(std::ostream& os,
+    friend ostream& operator<<(ostream& os,
                                     const Location& loc);
 };
 

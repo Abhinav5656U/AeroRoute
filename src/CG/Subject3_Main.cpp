@@ -1,10 +1,11 @@
 /*
- * ============================================================
+ *
  * FILE        : Subject3_Main.cpp
  * PROJECT     : AeroRoute — Autonomous Drone Delivery Simulator
  * SUBJECT     : CG — Computer Graphics Lab
  * COURSE CODE : 2310218L
  * TASK        : Task 1 (CO1 CO2) + Task 2 (CO3 CO5)
+ *               + Task 3 (CO6)
  * DESCRIPTION : Standalone entry point for CG subject.
  *               Demonstrates all OpenGL primitives,
  *               affine transformations, and Cohen-Sutherland
@@ -13,27 +14,33 @@
  *   cd src/CG
  *   g++ Subject3_Main.cpp GraphicsRenderer.cpp -o ..\..\build\CG.exe -std=c++17 -lfreeglut -lopengl32 -lglu32
  *   ..\..\build\CG.exe
- * ============================================================
+ *
  */
 
 #include <iostream>
 #include <vector>
 #include "GraphicsRenderer.h"
-#include "../Constants.h"
+#include "../shared/Constants.h"
+using namespace std;
 
 int main(int argc, char** argv) {
 
-    std::cout << "\n";
-    std::cout << "  ================================================\n";
-    std::cout << "   AeroRoute — CG: Computer Graphics Lab\n";
-    std::cout << "   Course Code: 2310218L\n";
-    std::cout << "   CO1 CO2: OpenGL Primitives\n";
-    std::cout << "   CO3:     Affine Transformations\n";
-    std::cout << "   CO5:     Cohen-Sutherland Clipping\n";
-    std::cout << "   MIT Academy of Engineering | Sem III 2026-27\n";
-    std::cout << "  ================================================\n\n";
+    cout << "\n";
+    cout << "  ================================================\n";
+    cout << "   AeroRoute — CG: Computer Graphics Lab\n";
+    cout << "   Course Code: 2310218L\n";
+    cout << "   CO1 CO2: OpenGL Primitives\n";
+    cout << "   CO3:     Affine Transformations\n";
+    cout << "   CO5:     Cohen-Sutherland Clipping\n";
+    cout << "   CO6:     Procedural Textures and Landmark Lighting\n";
+    cout << "   MIT Academy of Engineering | Sem III 2026-27\n";
+    cout << "  ================================================\n\n";
 
     GraphicsRenderer renderer;
+    // [CG CO6 - Task 3] Show the procedural city texture and colored lighting.
+    renderer.setTask3EffectsEnabled(true);
+    cout << "[CG CO6 - Task 3] Procedural surface texture and landmark "
+            "lighting enabled (press T in the window to toggle).\n";
 
     // ── Load a sample city grid ───────────────────────────────
     int sampleGrid[GRID_ROWS][GRID_COLS] = {
@@ -49,7 +56,7 @@ int main(int argc, char** argv) {
         {0,2,0,0,0,0,4,0,3,1},
     };
 
-    std::string sampleLabels[GRID_ROWS][GRID_COLS];
+    string sampleLabels[GRID_ROWS][GRID_COLS];
     sampleLabels[0][0] = "WH-1";
     sampleLabels[0][7] = "CS-A";
     sampleLabels[5][5] = "WH-2";
@@ -62,7 +69,7 @@ int main(int argc, char** argv) {
     // ── Load a sample route ───────────────────────────────────
     // Convert grid positions to GL coordinates manually
     // (renderer does this internally but we show the concept)
-    std::vector<Point2D> route;
+    vector<Point2D> route;
     // Route: WH-1 (0,0) -> midpoints -> CS-B (9,9)
     float orig_x = -230.0f;
     float orig_y =  230.0f;
@@ -84,13 +91,13 @@ int main(int argc, char** argv) {
     renderer.setDronePosition(0, 0, 0.0f);
 
     // ── Demo: Transformation matrices in terminal ─────────────
-    std::cout << "[CG CO3] Demonstrating transformation matrices:\n";
+    cout << "[CG CO3] Demonstrating transformation matrices:\n";
     renderer.makeTranslation(50.0f, -30.0f);
     renderer.makeRotation(45.0f);
     renderer.makeScaling(1.5f, 1.5f);
 
     // ── Set clipping viewport ─────────────────────────────────
-    std::cout << "\n[CG CO5] Setting clipping viewport:\n";
+    cout << "\n[CG CO5] Setting clipping viewport:\n";
     renderer.setViewport(-200.0f, 200.0f, -180.0f, 180.0f);
 
     // ── Export initial state to JSON ──────────────────────────

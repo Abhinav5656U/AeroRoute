@@ -18,10 +18,10 @@ echo [1/5] Creating folder structure...
 mkdir website\data
 mkdir website\input
 mkdir src\shared
-mkdir src\subject1
-mkdir src\subject2
-mkdir src\subject3
-mkdir src\subject4
+mkdir src\PL
+mkdir src\COA
+mkdir src\CG
+mkdir src\PSOOP
 mkdir build
 mkdir docs
 
@@ -31,6 +31,7 @@ REM ── Create starter JSON files ──────────────�
 echo [2/5] Creating starter JSON files...
 
 REM data/grid.json
+if not exist website\data\grid.json (
 (
 echo {
 echo   "source": "awaiting_cpp",
@@ -51,9 +52,11 @@ echo     [0,0,0,0,0,0,0,0,0,0]
 echo   ],
 echo   "labels": {}
 echo }
-) > website\data\grid.json
+)> website\data\grid.json
+)
 
 REM data/route.json
+if not exist website\data\route.json (
 (
 echo {
 echo   "source": "awaiting_cpp",
@@ -62,9 +65,11 @@ echo   "node_count": 0,
 echo   "current_index": 0,
 echo   "waypoints": []
 echo }
-) > website\data\route.json
+)> website\data\route.json
+)
 
 REM data/telemetry.json
+if not exist website\data\telemetry.json (
 (
 echo {
 echo   "source": "awaiting_cpp",
@@ -80,9 +85,11 @@ echo   "waypoint_total": null,
 echo   "drone_model": null,
 echo   "route_type": null
 echo }
-) > website\data\telemetry.json
+)> website\data\telemetry.json
+)
 
 REM data/registers.json
+if not exist website\data\registers.json (
 (
 echo {
 echo   "source": "awaiting_cpp",
@@ -108,9 +115,11 @@ echo     "total": 0.0,
 echo     "asm_op": "none"
 echo   }
 echo }
-) > website\data\registers.json
+)> website\data\registers.json
+)
 
 REM data/mission.json
+if not exist website\data\mission.json (
 (
 echo {
 echo   "source": "awaiting_cpp",
@@ -123,15 +132,18 @@ echo     "scale": 1.0,
 echo     "clipped_segments": 0
 echo   }
 echo }
-) > website\data\mission.json
+)> website\data\mission.json
+)
 
 REM input/user_input.json
+if not exist website\input\user_input.json (
 (
 echo {
 echo   "command": "NONE",
 echo   "timestamp": 0
 echo }
-) > website\input\user_input.json
+)> website\input\user_input.json
+)
 
 echo       Done.
 
@@ -148,6 +160,7 @@ if %errorlevel% == 0 (
 
 REM ── Create README ────────────────────────────────────────────
 echo [4/5] Creating README...
+if not exist docs\README.md (
 (
 echo # AeroRoute — Autonomous Drone Delivery Simulator
 echo MIT Academy of Engineering ^| SY B.Tech Sem III ^| 2026-27
@@ -156,43 +169,44 @@ echo ## How to Run
 echo.
 echo ### Subject 1 — Programming Lab
 echo ```
-echo cd src/subject1
+echo cd src/PL
 echo g++ Subject1_Main.cpp CityGrid.cpp RouteTracker.cpp -o ../../build/subject1.exe
 echo ../../build/subject1.exe
 echo ```
 echo.
 echo ### Subject 2 — COA Lab
 echo ```
-echo cd src/subject2
+echo cd src/COA
 echo g++ Subject2_Main.cpp DroneRegisters.cpp AssemblyEngine.cpp -o ../../build/subject2.exe
 echo ../../build/subject2.exe
 echo ```
 echo.
 echo ### Subject 3 — Graphics Lab
 echo ```
-echo cd src/subject3
+echo cd src/CG
 echo g++ Subject3_Main.cpp GraphicsRenderer.cpp -o ../../build/subject3.exe -lfreeglut -lopengl32 -lglu32
 echo ../../build/subject3.exe
 echo ```
 echo.
 echo ### Subject 4 — OOP Lab
 echo ```
-echo cd src/subject4
+echo cd src/PSOOP
 echo g++ Subject4_Main.cpp -o ../../build/subject4.exe
 echo ../../build/subject4.exe
 echo ```
 echo.
 echo ### Full Integrated System
 echo ```
-echo cd src
-echo g++ main.cpp subject1/CityGrid.cpp subject1/RouteTracker.cpp subject2/DroneRegisters.cpp subject2/AssemblyEngine.cpp subject4/Subject4_Main.cpp -o ../build/aeroroutemain.exe
-echo ../build/aeroroutemain.exe
+echo cd src/PL
+echo g++ ../main.cpp ../PL/CityGrid.cpp ../PL/RouteTracker.cpp ../COA/DroneRegisters.cpp ../COA/AssemblyEngine.cpp ../CG/GraphicsRenderer.cpp ../PSOOP/Location.cpp ../PSOOP/Warehouse.cpp ../PSOOP/CustomerSite.cpp ../PSOOP/ChargingPad.cpp ../PSOOP/Package.cpp ../PSOOP/Drone.cpp -o ../../build/aeroroutemain.exe -std=c++17 -lfreeglut -lopengl32 -lglu32
+echo ../../build/aeroroutemain.exe
 echo ```
 echo.
 echo ### Website
 echo Open website/index.html with VS Code Live Server
 echo OR run: python -m http.server 8080 inside website/ folder
 ) > docs\README.md
+)
 
 echo       Done.
 
@@ -206,8 +220,7 @@ echo   README created in docs/
 echo  ================================================
 echo.
 echo  Next steps:
-echo  1. Copy your HTML CSS JS into website/ folder
-echo  2. Open CMD in src/subject1/
-echo  3. We will compile Subject 1 there
+echo  1. Open website/index.html with a local web server
+echo  2. Compile a subject from its src/PL, src/COA, src/CG, or src/PSOOP folder
 echo.
 pause

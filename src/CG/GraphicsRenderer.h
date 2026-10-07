@@ -1,5 +1,5 @@
 /*
- * ============================================================
+ *
  * FILE        : GraphicsRenderer.h
  * PROJECT     : AeroRoute — Autonomous Drone Delivery Simulator
  * SUBJECT     : CG — Computer Graphics Lab
@@ -11,9 +11,8 @@
  *               CO2 — Use OpenGL primitives
  *               CO3 — Apply affine transformations
  *               CO5 — Implement Cohen-Sutherland clipping
- * AUTHOR      : [Your Name] | MIT Academy of Engineering
  * DATE        : 2026-2027
- * ============================================================
+ *
  */
 
 #ifndef GRAPHICS_RENDERER_H
@@ -22,14 +21,17 @@
 #include <string>
 #include <vector>
 #include <cmath>
-#include "../Constants.h"
-#include "../JsonWriter.h"
+#include <functional>
+#include <utility>
 
 // ── OpenGL headers for Windows + freeGLUT ────────────────────
 #include <windows.h>
 #include <GL/gl.h>
 #include <GL/glu.h>
-#include <GL/glut.h>
+#include <GL/freeglut.h>
+#include "../shared/Constants.h"
+#include "../shared/JsonWriter.h"
+using namespace std;
 
 // ════════════════════════════════════════════════════════════
 // [CG CO1 - Task 1: Point2D]
@@ -68,7 +70,7 @@ struct TransformMatrix {
     Point2D apply(const Point2D& p) const;
 
     // Display matrix values
-    void display(const std::string& label) const;
+    void display(const string& label) const;
 };
 
 // ════════════════════════════════════════════════════════════
@@ -100,6 +102,7 @@ const int CS_TOP    = 8; // 1000
 // Manages the full OpenGL rendering pipeline for AeroRoute:
 //   Task 1: Draws city grid, drone, nodes using GL primitives
 //   Task 2: Applies transformations, clips lines to viewport
+//   Task 3: Maps a procedural city texture and landmark lighting
 // ════════════════════════════════════════════════════════════
 class GraphicsRenderer {
 private:
@@ -112,17 +115,25 @@ private:
     float cellSize;     // size of each grid cell in GL units
     float gridOriginX;  // top-left of grid in GL coords
     float gridOriginY;
+    int activeRows;
+    int activeCols;
+    bool task3EffectsEnabled;
+    GLuint cityTexture;
 
     // ── City grid data (matches CityGrid from PL) ─────────────
     int   gridCells[GRID_ROWS][GRID_COLS];
-    std::string gridLabels[GRID_ROWS][GRID_COLS];
+    string gridLabels[GRID_ROWS][GRID_COLS];
 
     // ── Route waypoints ───────────────────────────────────────
-    std::vector<Point2D> routePoints;
-    std::string          routeType;
+    vector<Point2D> routePoints;
+    string          routeType;
+    vector<pair<int, int>> deliveryGridPath;
+    vector<pair<int, int>> trafficGridPath;
+    vector<Point2D> trafficPoints;
 
     // ── Drone state ───────────────────────────────────────────
     Point2D dronePos;
+    Point2D trafficPos;
     float   droneAngle;   // heading in degrees
     float   droneScale;   // zoom level
 
@@ -140,17 +151,31 @@ private:
     int clippedSegments;
     int totalSegments;
 
+    // ── Delivery simulation state ─────────────────────────────
+    float deliveryDistance;
+    float trafficDistance;
+    int lastDeliveryNode;
+    int lastTrafficNode;
+    int trafficDirection;
+    bool simulationActive;
+    bool collisionHold;
+    string simulationStatus;
+    function<void(int, int, bool, bool)> simulationCallback;
+
     // ── Graphics data for JSON export ─────────────────────────
     GraphicsData gfxData;
 
     // ── Private drawing helpers ───────────────────────────────
     void drawGridLines();
+    void drawTask3TexturedSurface();
+    void drawTask3Lighting();
     void drawCell(int row, int col);
     void drawWarehouseNode(float cx, float cy);
     void drawCustomerNode(float cx, float cy);
     void drawChargingNode(float cx, float cy);
     void drawObstacleNode(float cx, float cy);
     void drawDroneBody(float cx, float cy, float angle);
+    void drawTrafficDrone();
     void drawRotorArm(float cx, float cy,
                       float dx, float dy);
     void drawLegend();
@@ -159,6 +184,10 @@ private:
     // ── Coordinate conversion helpers ─────────────────────────
     Point2D gridToGL(int row, int col) const;
     Point2D glToGrid(float x, float y)  const;
+    Point2D pointAlongPath(const vector<Point2D>& points,
+                           float distance) const;
+    float pathLength(const vector<Point2D>& points) const;
+    void updateSimulation();
 
     // ── Cohen-Sutherland helpers [CG CO5] ─────────────────────
     int  computeRegionCode(float x, float y) const;
@@ -172,10 +201,17 @@ public:
 
     // ── Data loading (from PL and COA modules) ────────────────
     void loadGrid(int cells[GRID_ROWS][GRID_COLS],
-                  std::string labels[GRID_ROWS][GRID_COLS]);
-    void loadRoute(const std::vector<Point2D>& points,
-                   const std::string& type);
+                  string labels[GRID_ROWS][GRID_COLS],
+                  int rows = GRID_ROWS, int cols = GRID_COLS);
+    void loadRoute(const vector<Point2D>& points,
+                   const string& type);
     void setDronePosition(int row, int col, float angle);
+    void setSimulationPaths(const vector<pair<int, int>>& deliveryPath,
+                            const vector<pair<int, int>>& trafficPath);
+    void setSimulationCallback(
+        function<void(int, int, bool, bool)> callback);
+    void setTask3EffectsEnabled(bool enabled);
+    void toggleTask3Effects();
 
     // ════════════════════════════════════════════════════════
     // TASK 1 — Graphics Primitives [CG CO1, CO2]
@@ -198,7 +234,7 @@ public:
                   float r, float g, float b,
                   bool filled = true);
 
-    void drawPolygon(const std::vector<Point2D>& vertices,
+    void drawPolygon(const vector<Point2D>& vertices,
                      float r, float g, float b,
                      bool filled = true);
 
@@ -273,7 +309,7 @@ public:
 
     // ── GLUT window launch ───────────────────────────────────
     void launchWindow(int argc, char** argv,
-                      const std::string& title);
+                      const string& title);
 };
 
 #endif // GRAPHICS_RENDERER_H

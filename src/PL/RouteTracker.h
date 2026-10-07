@@ -1,11 +1,11 @@
 /*
- * ============================================================
+ *
  * FILE        : RouteTracker.h
  * PROJECT     : AeroRoute — Autonomous Drone Delivery Simulator
  * SUBJECT     : Programming Lab | Course Code: 2310214L
  * TASK        : Task 2 — Dynamic Route Tracking
  * COURSE OUT  : CO2 — Implement SLL DLL CLL for route tracking
- * ============================================================
+ *
  */
 
 #ifndef ROUTE_TRACKER_H
@@ -15,6 +15,7 @@
 #include <vector>
 #include "../shared/Constants.h"
 #include "../shared/JsonWriter.h"
+using namespace std;
 
 // ════════════════════════════════════════════════════════════
 // [PL CO2 - Task 2: Waypoint Node]
@@ -24,7 +25,7 @@
 struct WaypointNode {
     int         row;
     int         col;
-    std::string label;
+    string label;
 
     // Singly linked — forward pointer only
     WaypointNode* next;
@@ -33,7 +34,7 @@ struct WaypointNode {
     WaypointNode* prev;
 
     // Constructor
-    WaypointNode(int r, int c, const std::string& lbl)
+    WaypointNode(int r, int c, const string& lbl)
         : row(r), col(c), label(lbl), next(nullptr), prev(nullptr) {}
 };
 
@@ -53,14 +54,14 @@ public:
     SinglyLinkedList();
     ~SinglyLinkedList();
 
-    void addWaypoint(int row, int col, const std::string& label);
+    void addWaypoint(int row, int col, const string& label);
     bool removeFirst();
     bool removeLast();
     void displayForward()  const;
     void advanceCurrent();
 
     // For JSON export
-    std::vector<WaypointData> toVector()   const;
+    vector<WaypointData> toVector()   const;
     int                       getSize()    const;
     int                       getCurrent() const;
     WaypointNode*             getHead()    const;
@@ -85,13 +86,13 @@ public:
     DoublyLinkedList();
     ~DoublyLinkedList();
 
-    void addWaypoint(int row, int col, const std::string& label);
+    void addWaypoint(int row, int col, const string& label);
     void displayForward()  const;
     void displayBackward() const;
     void advanceCurrent();
     void reversDirection();
 
-    std::vector<WaypointData> toVector()   const;
+    vector<WaypointData> toVector()   const;
     int                       getSize()    const;
     int                       getCurrent() const;
 };
@@ -112,11 +113,11 @@ public:
     CircularLinkedList();
     ~CircularLinkedList();
 
-    void addWaypoint(int row, int col, const std::string& label);
+    void addWaypoint(int row, int col, const string& label);
     void displayCircular() const;
     void advanceCurrent();  // moves to next, wraps around
 
-    std::vector<WaypointData> toVector()   const;
+    vector<WaypointData> toVector()   const;
     int                       getSize()    const;
     int                       getCurrent() const;
 };
@@ -132,18 +133,18 @@ private:
     SinglyLinkedList  sll;
     DoublyLinkedList  dll;
     CircularLinkedList cll;
-    std::string       activeRouteType;
+    string       activeRouteType;
 
 public:
     RouteTracker();
 
-    void setRouteType(const std::string& type); // "SLL" "DLL" "CLL"
-    void addWaypoint(int row, int col, const std::string& label);
+    void setRouteType(const string& type); // "SLL" "DLL" "CLL"
+    void addWaypoint(int row, int col, const string& label);
     void advanceDrone();
     void displayRoute() const;
     void exportToJson() const;
 
-    std::string getActiveType() const;
+    string getActiveType() const;
 };
 
 #endif // ROUTE_TRACKER_H

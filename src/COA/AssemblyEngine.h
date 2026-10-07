@@ -1,5 +1,5 @@
 /*
- * ============================================================
+ *
  * FILE        : AssemblyEngine.h
  * PROJECT     : AeroRoute — Autonomous Drone Delivery Simulator
  * SUBJECT     : COA Lab | Course Code: 2310221L
@@ -9,19 +9,20 @@
  *               x86-64 instructions: MOV ADD SUB CMP JMP
  *               and conditional jumps.
  *               Includes 2 real inline ASM operations.
- * AUTHOR      : [Your Name] | MIT Academy of Engineering
  * DATE        : 2026-2027
- * ============================================================
+ *
  */
 
 #ifndef ASSEMBLY_ENGINE_H
 #define ASSEMBLY_ENGINE_H
 
+#include <cstddef>
 #include <string>
 #include <vector>
 #include <cmath>
 #include "DroneRegisters.h"
 #include "../shared/JsonWriter.h"
+using namespace std;
 
 // ════════════════════════════════════════════════════════════
 // [COA CO2 - Task 2: AssemblyEngine Class]
@@ -43,17 +44,17 @@ private:
     DroneRegisters& regs;
 
     // Instruction trace log (sent to JSON and displayed)
-    std::vector<InstructionData> instructionLog;
+    vector<InstructionData> instructionLog;
 
     // Current displacement computation results
     DisplacementData currentDisp;
 
     // ── Private helpers ──────────────────────────────────────
-    void logInstruction(const std::string& addr,
-                        const std::string& op,
-                        const std::string& args);
+    void logInstruction(const string& addr,
+                        const string& op,
+                        const string& args);
 
-    std::string pcToHex(long long pc) const;
+    string pcToHex(long long pc) const;
 
 public:
     // Constructor — requires a DroneRegisters instance
@@ -63,25 +64,33 @@ public:
 
     // MOV simulation — loads value into named register slot
     void SIM_MOV(long long& dest, long long src,
-                 const std::string& destReg,
-                 const std::string& srcOperand);
+                 const string& destReg,
+                 const string& srcOperand);
 
     // ADD simulation — dest = dest + src, logs instruction
     long long SIM_ADD(long long dest, long long src,
-                      const std::string& destReg,
-                      const std::string& srcOperand);
+                      const string& destReg,
+                      const string& srcOperand);
 
     // SUB simulation — dest = dest - src, logs instruction
     long long SIM_SUB(long long dest, long long src,
-                      const std::string& destReg,
-                      const std::string& srcOperand);
+                      const string& destReg,
+                      const string& srcOperand);
+
+    // [COA CO3 - Task 3] Multiplication using successive addition.
+    long long SIM_MUL_SUCCESSIVE(long long multiplicand,
+                                 long long multiplier);
+
+    // [COA CO3 - Task 3] String operations using 64-bit string instructions.
+    size_t asmStringLength(const string& text);
+    void asmStringAppend(string& destination, const string& source);
 
     // CMP + conditional JMP simulation
     // Returns true if jump should be taken
     bool SIM_CMP_JMP(long long op1, long long op2,
-                     const std::string& jumpType,
-                     const std::string& op1Name,
-                     const std::string& op2Name);
+                     const string& jumpType,
+                     const string& op1Name,
+                     const string& op2Name);
 
     // ── REAL Inline x86-64 Assembly [COA CO2] ─────────────────
 
@@ -109,7 +118,7 @@ public:
     void displayDisplacement()      const;
 
     // ── Accessors ────────────────────────────────────────────
-    const std::vector<InstructionData>& getInstructionLog() const;
+    const vector<InstructionData>& getInstructionLog() const;
     const DisplacementData&             getDisplacement()   const;
 
     // Clear log between missions

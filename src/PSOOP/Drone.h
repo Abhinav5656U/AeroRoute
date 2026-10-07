@@ -1,5 +1,5 @@
 /*
- * ============================================================
+ *
  * FILE        : Drone.h
  * PROJECT     : AeroRoute — Autonomous Drone Delivery Simulator
  * SUBJECT     : PSOOP — Problem Solving Using OOP
@@ -10,7 +10,7 @@
  *               inherit and override fly() and getModelName().
  *               Demonstrates polymorphism eliminating
  *               redundant code across drone models.
- * ============================================================
+ *
  */
 
 #ifndef DRONE_H
@@ -22,6 +22,7 @@
 #include <memory>
 #include "Package.h"
 #include "Location.h"
+using namespace std;
 
 // ════════════════════════════════════════════════════════════
 // [PSOOP CO2 - Task 2: Abstract Drone Base Class]
@@ -35,7 +36,7 @@ private:
 
 protected:
     // [PSOOP CO2 - protected: accessible to all drone models]
-    std::string serialNumber;
+    string serialNumber;
     double      batteryPct;
     double      maxBatteryWh;
     int         currentRow;
@@ -43,16 +44,16 @@ protected:
     double      headingDeg;
     double      altitudeM;
     double      speedMs;
-    std::string status;  // IDLE FLYING CHARGING DOCKED ERROR
+    string status;  // IDLE FLYING CHARGING DOCKED ERROR
 
     // Package currently being carried (nullptr if empty)
     Package*    loadedPackage;
 
     // Flight history (list of visited positions)
-    std::vector<std::pair<int,int>> flightLog;
+    vector<pair<int,int>> flightLog;
 
 public:
-    Drone(const std::string& serial,
+    Drone(const string& serial,
           double maxBattery,
           int startRow, int startCol);
 
@@ -69,7 +70,7 @@ public:
     virtual void fly(int targetRow, int targetCol) = 0;
 
     // Return model name string
-    virtual std::string getModelName() const = 0;
+    virtual string getModelName() const = 0;
 
     // Return max payload in kg
     virtual double getMaxPayloadKg() const = 0;
@@ -94,17 +95,17 @@ public:
 
     // ── Getters ──────────────────────────────────────────────
     int         getId()            const;
-    std::string getSerialNumber()  const;
+    string getSerialNumber()  const;
     double      getBatteryPct()    const;
     int         getCurrentRow()    const;
     int         getCurrentCol()    const;
     double      getHeadingDeg()    const;
     double      getAltitudeM()     const;
-    std::string getStatus()        const;
+    string getStatus()        const;
     bool        hasPackage()       const;
 
     // ── Setters ──────────────────────────────────────────────
-    void setStatus(const std::string& s);
+    void setStatus(const string& s);
     void setAltitude(double alt);
     void setHeading(double deg);
 };
@@ -119,14 +120,14 @@ private:
     bool hasParachuteDrop; // can drop without landing
 
 public:
-    DeliveryDrone(const std::string& serial,
+    DeliveryDrone(const string& serial,
                   int startRow, int startCol,
                   bool parachute = false);
     ~DeliveryDrone();
 
     // [PSOOP CO2 - Override pure virtual methods]
     void        fly(int targetRow, int targetCol) override;
-    std::string getModelName()    const override;
+    string getModelName()    const override;
     double      getMaxPayloadKg() const override;
     int         getMaxRangeUnits()const override;
     void        displaySpecs()    const override;
@@ -142,13 +143,13 @@ private:
     int  scanRadius;
 
 public:
-    ScoutDrone(const std::string& serial,
+    ScoutDrone(const string& serial,
                int startRow, int startCol,
                int radius = 3);
     ~ScoutDrone();
 
     void        fly(int targetRow, int targetCol) override;
-    std::string getModelName()    const override;
+    string getModelName()    const override;
     double      getMaxPayloadKg() const override;
     int         getMaxRangeUnits()const override;
     void        displaySpecs()    const override;
@@ -167,13 +168,13 @@ private:
     bool hasStabiliser;
 
 public:
-    HeavyDrone(const std::string& serial,
+    HeavyDrone(const string& serial,
                int startRow, int startCol,
                int rotors = 8);
     ~HeavyDrone();
 
     void        fly(int targetRow, int targetCol) override;
-    std::string getModelName()    const override;
+    string getModelName()    const override;
     double      getMaxPayloadKg() const override;
     int         getMaxRangeUnits()const override;
     void        displaySpecs()    const override;

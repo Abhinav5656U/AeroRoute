@@ -23,6 +23,7 @@
 #include "DeliveryScheduler.h"
 #include "../shared/Constants.h"
 #include "../shared/JsonWriter.h"
+using namespace std;
 
 // ── Forward declarations ──────────────────────────────────────
 void showMenu();
@@ -35,14 +36,14 @@ void clearInput();
 // ── Main ──────────────────────────────────────────────────────
 int main() {
 
-    std::cout << "\n";
-    std::cout << "  ================================================\n";
-    std::cout << "   AeroRoute — Subject 1: Programming Lab\n";
-    std::cout << "   Course Code: 2310214L\n";
-    std::cout << "   CO1: City Grid Arrays\n";
-    std::cout << "   CO2: Linked List Route Tracking\n";
-    std::cout << "   MIT Academy of Engineering | Sem III 2026-27\n";
-    std::cout << "  ================================================\n\n";
+    cout << "\n";
+    cout << "  ================================================\n";
+    cout << "   AeroRoute — Subject 1: Programming Lab\n";
+    cout << "   Course Code: 2310214L\n";
+    cout << "   CO1: City Grid Arrays\n";
+    cout << "   CO2: Linked List Route Tracking\n";
+    cout << "   MIT Academy of Engineering | Sem III 2026-27\n";
+    cout << "  ================================================\n\n";
 
     CityGrid     grid;
     RouteTracker tracker;
@@ -50,7 +51,7 @@ int main() {
     int choice = 0;
     do {
         showMenu();
-        std::cin >> choice;
+        cin >> choice;
         clearInput();
 
         switch (choice) {
@@ -67,17 +68,17 @@ int main() {
                 // Export current state to JSON for website
                 grid.exportToJson();
                 tracker.exportToJson();
-                std::cout << "\n  Both JSON files updated.\n";
-                std::cout << "  Check website/data/ folder.\n\n";
+                cout << "\n  Both JSON files updated.\n";
+                cout << "  Check website/data/ folder.\n\n";
                 break;
             case 5:
                 runTask3Demo();
                 break;
             case 0:
-                std::cout << "\n  Exiting Subject 1.\n\n";
+                cout << "\n  Exiting Subject 1.\n\n";
                 break;
             default:
-                std::cout << "\n  Invalid choice.\n\n";
+                cout << "\n  Invalid choice.\n\n";
         }
     } while (choice != 0);
 
@@ -86,25 +87,25 @@ int main() {
 
 // ── Menu ──────────────────────────────────────────────────────
 void showMenu() {
-    std::cout << "  ------------------------------------------------\n";
-    std::cout << "   SUBJECT 1 — MAIN MENU\n";
-    std::cout << "  ------------------------------------------------\n";
-    std::cout << "   [1] Task 1 Demo — City Grid (CO1)\n";
-    std::cout << "       Arrays: insert delete update search display\n";
-    std::cout << "   [2] Task 2 Demo — Route Tracker (CO2)\n";
-    std::cout << "       SLL forward | DLL return | CLL patrol\n";
-    std::cout << "   [3] Interactive Mode — User Input\n";
-    std::cout << "       You choose nodes and routes manually\n";
-    std::cout << "   [4] Export to JSON (update website)\n";
-    std::cout << "   [5] Task 3 Demo — Delivery Queue and Completed Stack\n";
-    std::cout << "   [0] Exit\n";
-    std::cout << "  ------------------------------------------------\n";
-    std::cout << "   Choice: ";
+    cout << "  ------------------------------------------------\n";
+    cout << "   SUBJECT 1 — MAIN MENU\n";
+    cout << "  ------------------------------------------------\n";
+    cout << "   [1] Task 1 Demo — City Grid (CO1)\n";
+    cout << "       Arrays: insert delete update search display\n";
+    cout << "   [2] Task 2 Demo — Route Tracker (CO2)\n";
+    cout << "       SLL forward | DLL return | CLL patrol\n";
+    cout << "   [3] Interactive Mode — User Input\n";
+    cout << "       You choose nodes and routes manually\n";
+    cout << "   [4] Export to JSON (update website)\n";
+    cout << "   [5] Task 3 Demo — Delivery Queue and Completed Stack\n";
+    cout << "   [0] Exit\n";
+    cout << "  ------------------------------------------------\n";
+    cout << "   Choice: ";
 }
 
 void clearInput() {
-    std::cin.clear();
-    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+    cin.clear();
+    cin.ignore(numeric_limits<streamsize>::max(), '\n');
 }
 
 // ════════════════════════════════════════════════════════════
@@ -113,10 +114,10 @@ void clearInput() {
 // ════════════════════════════════════════════════════════════
 void runTask1Demo(CityGrid& grid) {
 
-    std::cout << "\n  --- TASK 1: 2D Array City Grid Demo ---\n\n";
+    cout << "\n  --- TASK 1: 2D Array City Grid Demo ---\n\n";
 
     // INSERT operations
-    std::cout << "  [INSERT] Adding nodes to the grid:\n";
+    cout << "  [INSERT] Adding nodes to the grid:\n";
     grid.insertNode(0, 0, CELL_WAREHOUSE, "WH-Main");
     grid.insertNode(0, 9, CELL_WAREHOUSE, "WH-East");
     grid.insertNode(9, 9, CELL_CUSTOMER,  "CS-Alpha");
@@ -128,32 +129,32 @@ void runTask1Demo(CityGrid& grid) {
     grid.insertNode(6, 2, CELL_OBSTACLE,  "OB-3");
 
     // DISPLAY after inserts
-    std::cout << "\n  [DISPLAY] Grid after insertions:\n";
+    cout << "\n  [DISPLAY] Grid after insertions:\n";
     grid.displayGrid();
 
     // SEARCH operation
-    std::cout << "  [SEARCH] Looking for CS-Alpha:\n";
+    cout << "  [SEARCH] Looking for CS-Alpha:\n";
     int foundR, foundC;
     grid.searchByLabel("CS-Alpha", foundR, foundC);
 
     // UPDATE operation
-    std::cout << "\n  [UPDATE] Changing CS-Beta to a Charging Pad:\n";
+    cout << "\n  [UPDATE] Changing CS-Beta to a Charging Pad:\n";
     grid.updateNode(5, 5, CELL_CHARGING, "CP-3");
     grid.displayGrid();
 
     // DELETE operation
-    std::cout << "  [DELETE] Removing OB-3 at (6,2):\n";
+    cout << "  [DELETE] Removing OB-3 at (6,2):\n";
     grid.deleteNode(6, 2);
     grid.displayGrid();
 
     // ADJACENCY MATRIX
-    std::cout << "  [ADJACENCY] Flight corridors:\n";
+    cout << "  [ADJACENCY] Flight corridors:\n";
     grid.displayAdjacency();
 
     // Export to JSON so website updates
     grid.exportToJson();
 
-    std::cout << "  Task 1 demo complete.\n\n";
+    cout << "  Task 1 demo complete.\n\n";
 }
 
 // ════════════════════════════════════════════════════════════
@@ -162,10 +163,10 @@ void runTask1Demo(CityGrid& grid) {
 // ════════════════════════════════════════════════════════════
 void runTask2Demo(RouteTracker& tracker) {
 
-    std::cout << "\n  --- TASK 2: Linked List Route Tracking Demo ---\n\n";
+    cout << "\n  --- TASK 2: Linked List Route Tracking Demo ---\n\n";
 
     // ── SLL Demo ─────────────────────────────────────────────
-    std::cout << "  === Singly Linked List (Forward Delivery) ===\n";
+    cout << "  === Singly Linked List (Forward Delivery) ===\n";
     tracker.setRouteType(ROUTE_SLL);
     tracker.addWaypoint(0, 0, "WH-Main");
     tracker.addWaypoint(0, 3, "WP-1");
@@ -174,7 +175,7 @@ void runTask2Demo(RouteTracker& tracker) {
     tracker.addWaypoint(9, 9, "CS-Alpha");
     tracker.displayRoute();
 
-    std::cout << "  Advancing drone (SLL traversal):\n";
+    cout << "  Advancing drone (SLL traversal):\n";
     for (int i = 0; i < 3; i++) {
         tracker.advanceDrone();
         tracker.displayRoute();
@@ -182,7 +183,7 @@ void runTask2Demo(RouteTracker& tracker) {
     tracker.exportToJson();
 
     // ── DLL Demo ─────────────────────────────────────────────
-    std::cout << "  === Doubly Linked List (Return Path) ===\n";
+    cout << "  === Doubly Linked List (Return Path) ===\n";
     RouteTracker dll_tracker;
     dll_tracker.setRouteType(ROUTE_DLL);
     dll_tracker.addWaypoint(9, 9, "CS-Alpha");
@@ -192,7 +193,7 @@ void runTask2Demo(RouteTracker& tracker) {
     dll_tracker.displayRoute();
 
     // ── CLL Demo ─────────────────────────────────────────────
-    std::cout << "  === Circular Linked List (Patrol Zone) ===\n";
+    cout << "  === Circular Linked List (Patrol Zone) ===\n";
     RouteTracker cll_tracker;
     cll_tracker.setRouteType(ROUTE_CLL);
     cll_tracker.addWaypoint(2, 2, "Zone-A");
@@ -201,18 +202,19 @@ void runTask2Demo(RouteTracker& tracker) {
     cll_tracker.addWaypoint(7, 2, "Zone-D");
     cll_tracker.displayRoute();
 
-    std::cout << "  Cycling patrol (CLL wraps around):\n";
+    cout << "  Cycling patrol (CLL wraps around):\n";
     for (int i = 0; i < 6; i++) {
         cll_tracker.advanceDrone();
         cll_tracker.displayRoute();
     }
     cll_tracker.exportToJson();
 
-    std::cout << "  Task 2 demo complete.\n\n";
+    cout << "  Task 2 demo complete.\n\n";
 }
 
+// [PL CO3 - Task 3: queue-based FIFO dispatch and completed-drone LIFO stack]
 void runTask3Demo() {
-    std::cout << "\n  --- TASK 3: Delivery Queue and Completed Stack ---\n\n";
+    cout << "\n  --- TASK 3: Delivery Queue and Completed Stack ---\n\n";
 
     DeliveryScheduler scheduler;
     scheduler.enqueueDelivery("AR-D1-001", "CS-Alpha");
@@ -220,22 +222,30 @@ void runTask3Demo() {
     scheduler.enqueueDelivery("AR-D1-003", "CS-Gamma");
     scheduler.displayPendingDeliveries();
 
-    std::cout << "\n  Completing the next queued delivery:\n";
+    cout << "\n  Completing the next queued delivery:\n";
     scheduler.completeNextDelivery();
     scheduler.displayPendingDeliveries();
     scheduler.displayCompletedDrones();
 
-    std::cout << "\n  Adding a new delivery while earlier deliveries remain queued:\n";
+    cout << "\n  Adding a new delivery while earlier deliveries remain queued:\n";
     scheduler.enqueueDelivery("AR-D1-004", "CS-Delta");
     scheduler.displayPendingDeliveries();
 
-    std::cout << "\n  Completing the next queued delivery:\n";
+    cout << "\n  Completing the next queued delivery:\n";
     scheduler.completeNextDelivery();
     scheduler.displayPendingDeliveries();
     scheduler.displayCompletedDrones();
-    std::cout << "\n  Pending: " << scheduler.getPendingCount()
+    cout << "\n  Pending: " << scheduler.getPendingCount()
               << " | Completed: " << scheduler.getCompletedCount() << "\n";
-    std::cout << "  Task 3 demo complete.\n\n";
+    cout << "\n  Empty-queue boundary check:\n";
+    while (scheduler.completeNextDelivery()) {}
+    if (scheduler.completeNextDelivery()) {
+        cout << "  ERROR: empty queue reported a completed delivery.\n";
+    } else {
+        cout << "  Empty queue safely reports no work to complete.\n";
+    }
+    scheduler.displayCompletedDrones();
+    cout << "  Task 3 demo complete.\n\n";
 }
 
 // ════════════════════════════════════════════════════════════
@@ -244,66 +254,66 @@ void runTask3Demo() {
 // ════════════════════════════════════════════════════════════
 void runInteractiveMode(CityGrid& grid, RouteTracker& tracker) {
 
-    std::cout << "\n  --- Interactive Mode ---\n";
-    std::cout << "  Add your own nodes and build a route.\n\n";
+    cout << "\n  --- Interactive Mode ---\n";
+    cout << "  Add your own nodes and build a route.\n\n";
 
     int subChoice = 0;
     do {
-        std::cout << "  [1] Add grid node\n";
-        std::cout << "  [2] Remove grid node\n";
-        std::cout << "  [3] Search grid node\n";
-        std::cout << "  [4] Set route type (SLL/DLL/CLL)\n";
-        std::cout << "  [5] Add route waypoint\n";
-        std::cout << "  [6] Advance drone one step\n";
-        std::cout << "  [7] Display grid and route\n";
-        std::cout << "  [8] Export to JSON (update website)\n";
-        std::cout << "  [0] Back to main menu\n";
-        std::cout << "  Choice: ";
-        std::cin >> subChoice;
+        cout << "  [1] Add grid node\n";
+        cout << "  [2] Remove grid node\n";
+        cout << "  [3] Search grid node\n";
+        cout << "  [4] Set route type (SLL/DLL/CLL)\n";
+        cout << "  [5] Add route waypoint\n";
+        cout << "  [6] Advance drone one step\n";
+        cout << "  [7] Display grid and route\n";
+        cout << "  [8] Export to JSON (update website)\n";
+        cout << "  [0] Back to main menu\n";
+        cout << "  Choice: ";
+        cin >> subChoice;
         clearInput();
 
         if (subChoice == 1) {
             int r, c, t;
-            std::string lbl;
-            std::cout << "  Row (0-9): "; std::cin >> r;
-            std::cout << "  Col (0-9): "; std::cin >> c;
-            std::cout << "  Type (1=WH 2=CS 3=CP 4=OB): ";
-            std::cin >> t;
+            string lbl;
+            cout << "  Row (0-9): "; cin >> r;
+            cout << "  Col (0-9): "; cin >> c;
+            cout << "  Type (1=WH 2=CS 3=CP 4=OB): ";
+            cin >> t;
             clearInput();
-            std::cout << "  Label: ";
-            std::getline(std::cin, lbl);
+            cout << "  Label: ";
+            getline(cin, lbl);
             grid.insertNode(r, c, t, lbl);
             grid.exportToJson();
         }
         else if (subChoice == 2) {
             int r, c;
-            std::cout << "  Row: "; std::cin >> r;
-            std::cout << "  Col: "; std::cin >> c;
+            cout << "  Row: "; cin >> r;
+            cout << "  Col: "; cin >> c;
             grid.deleteNode(r, c);
             grid.exportToJson();
         }
         else if (subChoice == 3) {
-            std::string lbl;
+            string lbl;
             clearInput();
-            std::cout << "  Label to search: ";
-            std::getline(std::cin, lbl);
+            cout << "  Label to search: ";
+            getline(cin, lbl);
             int fr, fc;
             grid.searchByLabel(lbl, fr, fc);
         }
         else if (subChoice == 4) {
-            std::string rt;
-            std::cout << "  Route type (SLL/DLL/CLL): ";
-            std::cin >> rt;
+            string rt;
+            cout << "  Route type (SLL/DLL/CLL): ";
+            cin >> rt;
             tracker.setRouteType(rt);
         }
         else if (subChoice == 5) {
             int r, c;
-            std::string lbl;
-            std::cout << "  Row: "; std::cin >> r;
-            std::cout << "  Col: "; std::cin >> c;
+            string lbl;
+            cout << "  Row: "; cin >> r;
+            cout << "  Col: "; cin >> c;
             clearInput();
-            std::cout << "  Label: ";
-            std::getline(std::cin, lbl);
+            cout << "  Label: ";
+            getline(cin, lbl);
             tracker.addWaypoint(r, c, lbl);
             tracker.exportToJson();
         }
@@ -319,7 +329,7 @@ void runInteractiveMode(CityGrid& grid, RouteTracker& tracker) {
         else if (subChoice == 8) {
             grid.exportToJson();
             tracker.exportToJson();
-            std::cout << "  JSON files updated. Website will reflect changes.\n";
+            cout << "  JSON files updated. Website will reflect changes.\n";
         }
 
     } while (subChoice != 0);
