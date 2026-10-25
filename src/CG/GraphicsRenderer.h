@@ -150,12 +150,16 @@ private:
     // ── Clipping stats ────────────────────────────────────────
     int clippedSegments;
     int totalSegments;
+    int clippedEndpoints;
+    bool clippedRouteDirty;
+    vector<ClippedRouteSegmentData> clippedRouteSegments;
 
     // ── Delivery simulation state ─────────────────────────────
     float deliveryDistance;
     float trafficDistance;
     int lastDeliveryNode;
     int lastTrafficNode;
+    size_t deliveryWaypointIndex;
     int trafficDirection;
     bool simulationActive;
     bool collisionHold;
@@ -164,6 +168,7 @@ private:
 
     // ── Graphics data for JSON export ─────────────────────────
     GraphicsData gfxData;
+    vector<EntityData> missionEntities;
 
     // ── Private drawing helpers ───────────────────────────────
     void drawGridLines();
@@ -208,6 +213,7 @@ public:
     void setDronePosition(int row, int col, float angle);
     void setSimulationPaths(const vector<pair<int, int>>& deliveryPath,
                             const vector<pair<int, int>>& trafficPath);
+    void setDeliveryWaypointIndex(size_t waypointIndex);
     void setSimulationCallback(
         function<void(int, int, bool, bool)> callback);
     void setTask3EffectsEnabled(bool enabled);
@@ -274,12 +280,19 @@ public:
     // Set the clipping viewport boundaries
     void setViewport(float xmin, float xmax,
                      float ymin, float ymax);
+    void focusViewportOnRoute(float halfWidth = 90.0f,
+                              float halfHeight = 90.0f);
+    void followClipWindowToWaypoint(
+        size_t waypointIndex, float halfWidth = 90.0f,
+        float halfHeight = 90.0f);
+    void setMissionEntities(const vector<EntityData>& entities);
 
     // Clip and draw a line against the viewport
     // Returns true if any part of line was visible
     bool clipAndDrawLine(float x1, float y1,
                          float x2, float y2,
-                         float r,  float g, float b);
+                         float r,  float g, float b,
+                         int sourceIndex = -1);
 
     // Clip and draw entire route path
     void clipAndDrawRoute();
@@ -306,6 +319,7 @@ public:
 
     // ── JSON export ──────────────────────────────────────────
     void exportToJson() const;
+    void exportClippedRouteJson() const;
 
     // ── GLUT window launch ───────────────────────────────────
     void launchWindow(int argc, char** argv,

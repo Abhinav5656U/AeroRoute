@@ -177,7 +177,7 @@ echo.
 echo ### Subject 2 — COA Lab
 echo ```
 echo cd src/COA
-echo g++ Subject2_Main.cpp DroneRegisters.cpp AssemblyEngine.cpp -o ../../build/subject2.exe
+echo g++ Subject2_Main.cpp DroneRegisters.cpp AssemblyEngine.cpp DisplacementAsm.S -o ../../build/subject2.exe -std=c++17
 echo ../../build/subject2.exe
 echo ```
 echo.
@@ -198,7 +198,7 @@ echo.
 echo ### Full Integrated System
 echo ```
 echo cd src/PL
-echo g++ ../main.cpp ../PL/CityGrid.cpp ../PL/RouteTracker.cpp ../COA/DroneRegisters.cpp ../COA/AssemblyEngine.cpp ../CG/GraphicsRenderer.cpp ../PSOOP/Location.cpp ../PSOOP/Warehouse.cpp ../PSOOP/CustomerSite.cpp ../PSOOP/ChargingPad.cpp ../PSOOP/Package.cpp ../PSOOP/Drone.cpp -o ../../build/aeroroutemain.exe -std=c++17 -lfreeglut -lopengl32 -lglu32
+echo g++ ../main.cpp ../PL/CityGrid.cpp ../PL/RouteTracker.cpp ../PL/DeliveryScheduler.cpp ../COA/DroneRegisters.cpp ../COA/AssemblyEngine.cpp ../COA/DisplacementAsm.S ../CG/AeroRouteMenu.cpp ../CG/GraphicsRenderer.cpp ../PSOOP/Location.cpp ../PSOOP/Warehouse.cpp ../PSOOP/CustomerSite.cpp ../PSOOP/ChargingPad.cpp ../PSOOP/Package.cpp ../PSOOP/Drone.cpp -o ../../build/aeroroute.exe -std=c++17 -lfreeglut -lopengl32 -lglu32
 echo ../../build/aeroroutemain.exe
 echo ```
 echo.

@@ -39,9 +39,11 @@ GraphicsRenderer::GraphicsRenderer()
       rotationAngle(0.0f), scaleFactor(1.0f),
       vpXmin(-200.0f), vpXmax(200.0f),
       vpYmin(-200.0f), vpYmax(200.0f),
-    clippedSegments(0), totalSegments(0),
+    clippedSegments(0), totalSegments(0), clippedEndpoints(0),
+    clippedRouteDirty(true),
     deliveryDistance(0.0f), trafficDistance(0.0f),
-    lastDeliveryNode(0), lastTrafficNode(0), trafficDirection(1),
+    lastDeliveryNode(0), lastTrafficNode(0), deliveryWaypointIndex(0),
+    trafficDirection(1),
     simulationActive(false), collisionHold(false),
     simulationStatus("READY")
 {
@@ -124,6 +126,7 @@ void GraphicsRenderer::loadRoute(
 {
     routePoints = points;
     routeType   = type;
+    clippedRouteDirty = true;
     cout << "[CG] Route loaded: " << type
               << " with " << points.size() << " waypoints.\n";
 }
@@ -155,10 +158,22 @@ void GraphicsRenderer::setSimulationPaths(
     trafficDistance = 0.0f;
     lastDeliveryNode = 0;
     lastTrafficNode = 0;
+    deliveryWaypointIndex = deliveryGridPath.empty()
+        ? 0 : deliveryGridPath.size() - 1;
     trafficDirection = 1;
     collisionHold = false;
     simulationActive = routePoints.size() > 1;
     simulationStatus = simulationActive ? "FLYING" : "NO ROUTE";
+    clippedRouteDirty = true;
+}
+
+void GraphicsRenderer::setDeliveryWaypointIndex(size_t waypointIndex) {
+    if (deliveryGridPath.empty() ||
+        waypointIndex >= deliveryGridPath.size()) {
+        throw out_of_range(
+            "The delivery waypoint index is outside the active flight route.");
+    }
+    deliveryWaypointIndex = waypointIndex;
 }
 
 void GraphicsRenderer::setSimulationCallback(
@@ -612,9 +627,9 @@ void GraphicsRenderer::drawHUD() {
     float hy =  330.0f;
 
     // HUD background quad
-    drawQuad(hx, hy, 180.0f, 116.0f,
+    drawQuad(hx, hy, 190.0f, 180.0f,
              0.05f, 0.08f, 0.15f, true);
-    drawQuad(hx, hy, 180.0f, 116.0f,
+    drawQuad(hx, hy, 190.0f, 180.0f,
              0.0f, 0.4f, 0.8f, false);
 
     glColor3f(0.0f, 0.8f, 1.0f);
@@ -645,6 +660,13 @@ void GraphicsRenderer::drawHUD() {
               collisionHold ? 0.55f : 0.9f,
               0.35f);
     hudText(hx + 6, hy - 100, "Mission: " + simulationStatus);
+    glColor3f(0.75f, 0.82f, 0.95f);
+    hudText(hx + 6, hy - 116, "Dashed box: clip window");
+    glColor3f(1.0f, 1.0f, 0.0f);
+    hudText(hx + 6, hy - 132, "Yellow dots: clipped intersections");
+    glColor3f(0.9f, 0.88f, 0.68f);
+    hudText(hx + 6, hy - 148,
+        "Cut endpoints: " + to_string(clippedEndpoints));
 }
 
 // ════════════════════════════════════════════════════════════
@@ -727,6 +749,7 @@ void GraphicsRenderer::applyTransform(
     for (Point2D& point : routePoints) {
         point = M.apply(point);
     }
+    clippedRouteDirty = true;
     if (!routePoints.empty()) {
         dronePos = routePoints.front();
     } else {
@@ -788,9 +811,38 @@ void GraphicsRenderer::setViewport(
 {
     vpXmin = xmin; vpXmax = xmax;
     vpYmin = ymin; vpYmax = ymax;
+    clippedRouteDirty = true;
     cout << "[CG CO5] Viewport set: "
               << "X[" << xmin << "," << xmax << "] "
               << "Y[" << ymin << "," << ymax << "]\n";
+}
+
+void GraphicsRenderer::focusViewportOnRoute(float halfWidth,
+                                            float halfHeight) {
+    if (routePoints.empty()) {
+        throw std::runtime_error(
+            "Cannot focus the clipping viewport because the route is empty.");
+    }
+    if (halfWidth <= 0.0f || halfHeight <= 0.0f) {
+        throw std::invalid_argument(
+            "Clipping viewport dimensions must be positive.");
+    }
+    const Point2D focus =
+        pointAlongPath(routePoints, pathLength(routePoints) * 0.5f);
+    setViewport(focus.x - halfWidth, focus.x + halfWidth,
+                focus.y - halfHeight, focus.y + halfHeight);
+}
+
+void GraphicsRenderer::followClipWindowToWaypoint(
+    size_t waypointIndex, float halfWidth, float halfHeight) {
+    if (routePoints.empty()) {
+        throw std::runtime_error(
+            "Cannot follow the clipping window because the route is empty.");
+    }
+    const Point2D& focus =
+        routePoints[min(waypointIndex, routePoints.size() - 1)];
+    setViewport(focus.x - halfWidth, focus.x + halfWidth,
+                focus.y - halfHeight, focus.y + halfHeight);
 }
 
 // [CG CO5 - Compute region code for a point]
@@ -869,7 +921,8 @@ bool GraphicsRenderer::clipLine(
 bool GraphicsRenderer::clipAndDrawLine(
     float x1, float y1,
     float x2, float y2,
-    float r,  float g, float b)
+    float r,  float g, float b,
+    int sourceIndex)
 {
     totalSegments++;
     float cx1 = x1, cy1 = y1;
@@ -878,6 +931,15 @@ bool GraphicsRenderer::clipAndDrawLine(
     bool visible = clipLine(cx1, cy1, cx2, cy2);
 
     if (visible) {
+        const bool fromClipped = cx1 != x1 || cy1 != y1;
+        const bool toClipped = cx2 != x2 || cy2 != y2;
+        clippedEndpoints += static_cast<int>(fromClipped) +
+                            static_cast<int>(toClipped);
+        clippedRouteSegments.push_back({
+            sourceIndex >= 0 ? sourceIndex : totalSegments - 1,
+            cx1, cy1, cx2, cy2,
+            fromClipped, toClipped
+        });
         // Line passes through viewport — draw clipped version
         drawLine(cx1, cy1, cx2, cy2, r, g, b, false);
 
@@ -897,10 +959,22 @@ bool GraphicsRenderer::clipAndDrawLine(
 
 // [CG CO5 - Clip and draw entire route path]
 void GraphicsRenderer::clipAndDrawRoute() {
-    if (routePoints.size() < 2) return;
-
     clippedSegments = 0;
     totalSegments   = 0;
+    clippedEndpoints = 0;
+    clippedRouteSegments.clear();
+    if (routePoints.size() < 2) {
+        gfxData.clipped_segments = 0;
+        if (clippedRouteDirty) {
+            const GraphicsData graphics = {
+                translateX, translateY, rotationAngle, scaleFactor, 0
+            };
+            writeMissionJson(missionEntities, graphics);
+            exportClippedRouteJson();
+            clippedRouteDirty = false;
+        }
+        return;
+    }
 
     for (int i = 0; i < (int)routePoints.size() - 1; i++) {
         float x1 = routePoints[i].x;
@@ -909,7 +983,7 @@ void GraphicsRenderer::clipAndDrawRoute() {
         float y2 = routePoints[i + 1].y;
 
         clipAndDrawLine(x1, y1, x2, y2,
-                0.0f, 0.8f, 1.0f);
+                0.0f, 0.8f, 1.0f, i);
     }
 
     // For CLL — connect last to first
@@ -917,11 +991,21 @@ void GraphicsRenderer::clipAndDrawRoute() {
         clipAndDrawLine(
             routePoints.back().x,  routePoints.back().y,
             routePoints.front().x, routePoints.front().y,
-            0.0f, 0.8f, 1.0f
+            0.0f, 0.8f, 1.0f,
+            static_cast<int>(routePoints.size()) - 1
         );
     }
 
     gfxData.clipped_segments = clippedSegments;
+    if (clippedRouteDirty) {
+        const GraphicsData graphics = {
+            translateX, translateY, rotationAngle, scaleFactor,
+            clippedSegments
+        };
+        writeMissionJson(missionEntities, graphics);
+        exportClippedRouteJson();
+        clippedRouteDirty = false;
+    }
 }
 
 void GraphicsRenderer::displayClippingInfo() const {
@@ -931,6 +1015,7 @@ void GraphicsRenderer::displayClippingInfo() const {
               << vpYmin << "," << vpYmax << "]\n";
     cout << "    Total segments:   " << totalSegments   << "\n";
     cout << "    Clipped out:      " << clippedSegments << "\n";
+    cout << "    Clipped endpoints: " << clippedEndpoints << "\n";
     cout << "    Visible segments: "
               << (totalSegments - clippedSegments) << "\n\n";
 }
@@ -965,6 +1050,10 @@ void GraphicsRenderer::renderScene() {
 
     // Draw waypoint markers
     for (int i = 0; i < (int)routePoints.size(); i++) {
+        if (computeRegionCode(routePoints[i].x, routePoints[i].y) !=
+            CS_INSIDE) {
+            continue;
+        }
         float r  = (i == 0) ? 1.0f : 0.0f;
         float g  = (i == (int)routePoints.size()-1) ? 1.0f : 0.5f;
         float b  = 0.2f;
@@ -1053,6 +1142,7 @@ void GraphicsRenderer::keyboardCallback(
         case 27: // ESC
             cout << "[CG] Window closed.\n";
             glutLeaveMainLoop();
+            return;
     }
 
     r->exportToJson();
@@ -1060,7 +1150,7 @@ void GraphicsRenderer::keyboardCallback(
 }
 
 void GraphicsRenderer::timerCallback(int) {
-    if (!g_instance) return;
+    if (!g_instance || glutGetWindow() == 0) return;
     g_instance->updateSimulation();
     glutPostRedisplay();
     glutTimerFunc(33, timerCallback, 0); // ~30fps
@@ -1187,7 +1277,7 @@ void GraphicsRenderer::updateSimulation() {
     while (lastDeliveryNode < deliveryNode) {
         ++lastDeliveryNode;
         const bool delivered = lastDeliveryNode ==
-            static_cast<int>(deliveryGridPath.size()) - 1;
+            static_cast<int>(deliveryWaypointIndex);
         if (simulationCallback) {
             simulationCallback(
                 deliveryGridPath[lastDeliveryNode].first,
@@ -1198,7 +1288,9 @@ void GraphicsRenderer::updateSimulation() {
 
     if (deliveryDistance >= deliveryLength) {
         simulationActive = false;
-        simulationStatus = "DELIVERED";
+        simulationStatus = deliveryWaypointIndex + 1 <
+                deliveryGridPath.size()
+            ? "RETURNED" : "DELIVERED";
     }
 }
 
@@ -1209,21 +1301,31 @@ float GraphicsRenderer::getRotationAngle() const { return rotationAngle; }
 float GraphicsRenderer::getScaleFactor()   const { return scaleFactor; }
 int   GraphicsRenderer::getClippedCount()  const { return clippedSegments; }
 
+void GraphicsRenderer::setMissionEntities(
+    const vector<EntityData>& entities) {
+    missionEntities = entities;
+}
+
 // ════════════════════════════════════════════════════════════
 // JSON EXPORT
 // Writes graphics state to data/mission.json graphics field
 // ════════════════════════════════════════════════════════════
 void GraphicsRenderer::exportToJson() const {
-    // We write graphics data to mission.json
-    // Entities vector is empty here — PSOOP fills that
-    vector<EntityData> emptyEntities;
     GraphicsData gd = {
         translateX, translateY,
         rotationAngle, scaleFactor,
         clippedSegments
     };
-    writeMissionJson(emptyEntities, gd);
+    writeMissionJson(missionEntities, gd);
+    exportClippedRouteJson();
     cout << "[CG] Exported graphics data to mission.json\n";
+    cout << "[CG CO5] Saved clipped path data to clipped_route.json\n";
+}
+
+void GraphicsRenderer::exportClippedRouteJson() const {
+    writeClippedRouteJson(
+        clippedRouteSegments, vpXmin, vpXmax, vpYmin, vpYmax,
+        totalSegments, clippedSegments, clippedEndpoints);
 }
 
 // ════════════════════════════════════════════════════════════
@@ -1258,6 +1360,7 @@ void GraphicsRenderer::launchWindow(
     cout << "  Q/E      — rotate drone\n";
     cout << "  +/-      — zoom in/out\n";
     cout << "  C/V      — shrink/grow clip viewport\n";
+    cout << "  The dashed rectangle is the clipping window; yellow dots mark clipped intersections.\n";
     cout << "  T        — toggle Task 3 surface texture and colored lights\n";
     cout << "  J        — export JSON now\n";
     cout << "  ESC      — close window\n\n";

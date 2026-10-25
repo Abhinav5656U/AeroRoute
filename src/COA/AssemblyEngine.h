@@ -30,7 +30,8 @@ using namespace std;
 // Simulates an x86-64 instruction pipeline for drone
 // coordinate and displacement computation.
 //
-// Two operations use REAL inline x86-64 assembly:
+// Displacement calculation uses the separate DisplacementAsm.S file.
+// Two additional checks use REAL inline x86-64 assembly:
 //   1. asmAddCoordinates  — uses actual ADD instruction
 //   2. asmSubCoordinates  — uses actual SUB instruction
 //
@@ -105,10 +106,8 @@ public:
 
     // ── Displacement Computation [COA CO2] ────────────────────
 
-    // Main computation: given two grid positions,
-    // compute delta-X, delta-Y, and Euclidean displacement.
-    // Uses simulated assembly instruction sequence:
-    // MOV, SUB, IMUL (squared), ADD (sum), computes sqrt.
+    // Main computation: given two grid positions, the external
+    // assembly routine computes delta-X, delta-Y, and distance.
     DisplacementData computeDisplacement(
         int fromRow, int fromCol,
         int toRow,   int toCol);

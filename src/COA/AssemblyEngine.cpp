@@ -17,6 +17,10 @@
 #include <stdexcept>
 using namespace std;
 
+extern "C" void aeroroute_displacement_asm(
+    int fromRow, int fromCol, int toRow, int toCol,
+    long long* deltaX, long long* deltaY, double* displacement);
+
 // ── Constructor ───────────────────────────────────────────────
 AssemblyEngine::AssemblyEngine(DroneRegisters& registerFile)
     : regs(registerFile) {
@@ -35,8 +39,8 @@ void AssemblyEngine::logInstruction(
     instructionLog.push_back({ addr, op, args });
     // Also print to terminal
     cout << "  " << left << setw(14) << addr
-              << setw(6) << op
-              << args << "\n";
+              << setw(8) << op
+              << ' ' << args << "\n";
 }
 
 // ── Private: convert PC value to hex string ───────────────────
@@ -369,22 +373,8 @@ long long AssemblyEngine::asmSubCoordinates(
 // computeDisplacement
 // [COA CO2 - Task 2: Main displacement computation]
 //
-// Given two grid positions, computes:
-//   deltaX = toCol - fromCol    (using real ASM SUB)
-//   deltaY = toRow - fromRow    (using real ASM SUB)
-//   displacement = sqrt(dX^2 + dY^2)  (Euclidean distance)
-//
-// Assembly instruction sequence used:
-//   MOV R1, fromCol
-//   MOV R2, toCol
-//   SUB R2, R1       → deltaX  [REAL ASM]
-//   MOV R3, fromRow
-//   MOV R4, toRow
-//   SUB R4, R3       → deltaY  [REAL ASM]
-//   IMUL R2, R2      → deltaX^2 (simulated)
-//   IMUL R4, R4      → deltaY^2 (simulated)
-//   ADD R2, R4       → sum of squares (simulated)
-//   (sqrt computed in C, no x86 scalar sqrt in basic model)
+// The separate DisplacementAsm.S file performs both coordinate
+// subtractions, both squares, their sum, and the square root.
 // ════════════════════════════════════════════════════════════
 DisplacementData AssemblyEngine::computeDisplacement(
     int fromRow, int fromCol,
@@ -397,44 +387,53 @@ DisplacementData AssemblyEngine::computeDisplacement(
 
     long long R1, R2, R3, R4;
 
-    // Step 1: Load source column coordinate
-    SIM_MOV(R1, (long long)fromCol, "R1", to_string(fromCol));
+    SIM_MOV(R1, static_cast<long long>(fromCol),
+            "R1", to_string(fromCol));
+    SIM_MOV(R2, static_cast<long long>(toCol),
+            "R2", to_string(toCol));
+    SIM_MOV(R3, static_cast<long long>(fromRow),
+            "R3", to_string(fromRow));
+    SIM_MOV(R4, static_cast<long long>(toRow),
+            "R4", to_string(toRow));
 
-    // Step 2: Load destination column coordinate
-    SIM_MOV(R2, (long long)toCol,   "R2", to_string(toCol));
+    long long deltaX = 0;
+    long long deltaY = 0;
+    double displacement = 0.0;
+    aeroroute_displacement_asm(
+        fromRow, fromCol, toRow, toCol,
+        &deltaX, &deltaY, &displacement);
 
-    // Step 3: deltaX = toCol - fromCol  [REAL x86-64 ASM]
-    long long deltaX = asmSubCoordinates(R2, R1);
+    logInstruction(pcToHex(regs.getPC()), "SUB",
+        "RAX, R10  ; deltaX = " + to_string(deltaX) +
+            " [DisplacementAsm.S]");
+    regs.advancePC();
+    logInstruction(pcToHex(regs.getPC()), "IMUL",
+        "R10, R10  ; deltaX squared [DisplacementAsm.S]");
+    regs.advancePC();
+    logInstruction(pcToHex(regs.getPC()), "SUB",
+        "RAX, R11  ; deltaY = " + to_string(deltaY) +
+            " [DisplacementAsm.S]");
+    regs.advancePC();
+    logInstruction(pcToHex(regs.getPC()), "IMUL",
+        "RAX, RAX  ; deltaY squared [DisplacementAsm.S]");
+    regs.advancePC();
+    logInstruction(pcToHex(regs.getPC()), "ADD",
+        "RAX, R10  ; sum of squares [DisplacementAsm.S]");
+    regs.advancePC();
+    logInstruction(pcToHex(regs.getPC()), "CVTSI2SD",
+        "XMM0, RAX  ; integer sum to double [DisplacementAsm.S]");
+    regs.advancePC();
+    logInstruction(pcToHex(regs.getPC()), "SQRTSD",
+        "XMM0, XMM0  ; Euclidean distance [DisplacementAsm.S]");
+    regs.advancePC();
 
-    // Step 4: Load source row coordinate
-    SIM_MOV(R3, (long long)fromRow, "R3", to_string(fromRow));
-
-    // Step 5: Load destination row coordinate
-    SIM_MOV(R4, (long long)toRow,   "R4", to_string(toRow));
-
-    // Step 6: deltaY = toRow - fromRow  [REAL x86-64 ASM]
-    long long deltaY = asmSubCoordinates(R4, R3);
-
-    // Step 7: Square deltaX (simulated IMUL)
-    long long dX2 = SIM_ADD(deltaX * deltaX, 0LL,
-                             "R2", "R2*R2  ; IMUL (squared)");
-
-    // Step 8: Square deltaY (simulated IMUL)
-    long long dY2 = SIM_ADD(deltaY * deltaY, 0LL,
-                             "R4", "R4*R4  ; IMUL (squared)");
-
-    // Step 9: Sum of squares
-    long long sumSq = SIM_ADD(dX2, dY2, "R2", "R4");
-
-    // Step 10: CMP — check if displacement is zero
-    bool isZero = SIM_CMP_JMP(sumSq, 0LL, "JZ", "R2", "0");
+    const bool samePosition = deltaX == 0 && deltaY == 0;
+    bool isZero = SIM_CMP_JMP(
+        samePosition ? 0LL : 1LL, 0LL, "JZ", "distance", "0");
     if (isZero) {
         cout << "  [JZ taken] Source = Destination. "
                   << "No movement needed.\n";
     }
-
-    // Euclidean displacement
-    double displacement = sqrt((double)sumSq);
 
     // Determine dominant direction for ASM operation label
     string asmOp;
@@ -474,7 +473,7 @@ void AssemblyEngine::displayInstructionLog() const {
         cout << "  "
                   << left << setw(14) << ins.addr
                   << setw(8) << ins.op
-                  << ins.args << "\n";
+                  << ' ' << ins.args << "\n";
     }
     cout << "\n";
 }

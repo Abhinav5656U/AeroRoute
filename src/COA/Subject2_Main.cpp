@@ -10,7 +10,7 @@
  *               Writes real register data to registers.json.
  * HOW TO RUN  :
  *   cd src/subject2
- *   g++ Subject2_Main.cpp DroneRegisters.cpp AssemblyEngine.cpp -o ..\..\build\subject2.exe -std=c++17
+ *   g++ Subject2_Main.cpp DroneRegisters.cpp AssemblyEngine.cpp DisplacementAsm.S -o ..\..\build\subject2.exe -std=c++17
  *   ..\..\build\subject2.exe
  *
  */

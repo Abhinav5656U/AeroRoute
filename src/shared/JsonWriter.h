@@ -23,6 +23,7 @@
 #include <vector>
 #include <sstream>
 #include <iomanip>
+#include <iostream>
 #include "Constants.h"
 using namespace std;
 
@@ -61,6 +62,16 @@ struct GraphicsData {
     double rotate_deg;
     double scale;
     int    clipped_segments;
+};
+
+struct ClippedRouteSegmentData {
+    int source_index;
+    double from_x;
+    double from_y;
+    double to_x;
+    double to_y;
+    bool from_clipped;
+    bool to_clipped;
 };
 
 // ── Helper: open file safely ──────────────────────────────────
@@ -323,6 +334,49 @@ inline void writeMissionJson(
     f << "  }\n";
     f << "}\n";
     f.close();
+}
+
+inline void writeClippedRouteJson(
+    const vector<ClippedRouteSegmentData>& segments,
+    float xmin, float xmax, float ymin, float ymax,
+    int sourceSegmentCount, int rejectedSegmentCount,
+    int clippedEndpointCount
+) {
+    ofstream f;
+    if (!openFile(f, JSON_CLIPPED_ROUTE)) {
+        cerr << "[JsonWriter] Could not open clipped route output: "
+             << JSON_CLIPPED_ROUTE << '\n';
+        return;
+    }
+
+    f << fixed << setprecision(4);
+    f << "{\n";
+    f << "  \"algorithm\": \"Cohen-Sutherland\",\n";
+    f << "  \"viewport\": {\"xmin\": " << xmin
+      << ", \"xmax\": " << xmax
+      << ", \"ymin\": " << ymin
+      << ", \"ymax\": " << ymax << "},\n";
+    f << "  \"source_segment_count\": " << sourceSegmentCount << ",\n";
+    f << "  \"rendered_segment_count\": " << segments.size() << ",\n";
+    f << "  \"rejected_segment_count\": " << rejectedSegmentCount << ",\n";
+    f << "  \"clipped_endpoint_count\": " << clippedEndpointCount << ",\n";
+    f << "  \"segments\": [\n";
+    for (size_t index = 0; index < segments.size(); ++index) {
+        const ClippedRouteSegmentData& segment = segments[index];
+        f << "    {\"source_index\": " << segment.source_index
+          << ", \"from\": {\"x\": " << segment.from_x
+          << ", \"y\": " << segment.from_y
+          << "}, \"to\": {\"x\": " << segment.to_x
+          << ", \"y\": " << segment.to_y
+          << "}, \"from_clipped\": "
+          << (segment.from_clipped ? "true" : "false")
+          << ", \"to_clipped\": "
+          << (segment.to_clipped ? "true" : "false") << "}";
+        if (index + 1 < segments.size()) f << ",";
+        f << "\n";
+    }
+    f << "  ]\n";
+    f << "}\n";
 }
 
 #endif // JSON_WRITER_H

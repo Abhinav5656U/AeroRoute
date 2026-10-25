@@ -39,6 +39,7 @@ using namespace std;
 #define JSON_TELEMETRY  "../../website/data/telemetry.json"
 #define JSON_REGISTERS  "../../website/data/registers.json"
 #define JSON_MISSION    "../../website/data/mission.json"
+#define JSON_CLIPPED_ROUTE "../../website/data/clipped_route.json"
 #define JSON_INPUT      "../../website/input/user_input.json"
 
 // ── Register base address ─────────────────────────────────────
